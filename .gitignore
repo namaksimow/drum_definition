@@ -1,4 +1,14 @@
 ml-service/*
+!ml-service/README.md
+!ml-service/requirements.txt
+!ml-service/src/
+ml-service/src/*
+!ml-service/src/ml_service/
+!ml-service/src/ml_service/**
+
 songs/*
 tabs/
 .DS_Store
+.env
+
+**/__pycache__
