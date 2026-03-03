@@ -4,7 +4,7 @@ import asyncio
 import uuid
 from pathlib import Path
 
-from ml_service.domain.audio_pipeline import analyze_audio_file
+from ml_service.domain.audio_pipeline import run_song_pipeline
 from ml_service.domain.models import Job
 from ml_service.domain.tablature import build_tablature_data, format_ascii_from_tablature, save_tablature_json
 from ml_service.domain.tablature_report import save_ascii_tab_report
@@ -35,6 +35,13 @@ class JobService:
     async def get_job(self, job_id: str) -> Job | None:
         return await self.repo.get(job_id)
 
+    async def submit_job_from_path(self, song_path: Path) -> Job:
+        if not song_path.exists():
+            raise FileNotFoundError(f"Song file not found: {song_path}")
+
+        data = song_path.read_bytes()
+        return await self.submit_job(filename=song_path.name, data=data)
+
     async def process_job(self, job_id: str) -> Job | None:
         job = await self.repo.get(job_id)
         if job is None:
@@ -58,8 +65,8 @@ class JobService:
             await self.process_job(job_id)
 
     def _run_pipeline(self, *, input_path: Path, result_dir: Path) -> dict:
-        pipeline_result = analyze_audio_file(
-            audio_path=input_path,
+        pipeline_result = run_song_pipeline(
+            song_path=input_path,
             output_dir=result_dir,
             start_time=0.0,
             duration=None,
@@ -87,9 +94,11 @@ class JobService:
         save_ascii_tab_report(tab_text, str(tab_pdf_path))
 
         return {
-            "input_file": str(input_path),
+            "input_song": str(input_path),
             "output_dir": str(result_dir),
             "tempo_bpm": pipeline_result["tempo_bpm"],
+            "stems": pipeline_result["stems"],
+            "drums_stem": pipeline_result["drums_stem"],
             "analysis_start_sec": pipeline_result["analysis_start_sec"],
             "analysis_end_sec": pipeline_result["analysis_end_sec"],
             "parts": pipeline_result["parts"],
@@ -99,4 +108,3 @@ class JobService:
                 "pdf": str(tab_pdf_path),
             },
         }
-

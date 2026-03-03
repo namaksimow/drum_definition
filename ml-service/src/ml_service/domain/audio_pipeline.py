@@ -22,6 +22,38 @@ GAP_BY_INSTRUMENT = {
 }
 
 
+def separate_to_4stems(song_path: str | Path, stems_root_dir: str | Path) -> dict[str, Any]:
+    try:
+        from spleeter.separator import Separator
+    except ImportError as exc:
+        raise RuntimeError("Spleeter is not installed. Install dependency: spleeter") from exc
+
+    song_path = Path(song_path)
+    stems_root_dir = Path(stems_root_dir)
+    stems_root_dir.mkdir(parents=True, exist_ok=True)
+
+    separator = Separator("spleeter:4stems")
+    separator.separate_to_file(str(song_path), str(stems_root_dir), codec="wav")
+
+    track_dir = stems_root_dir / song_path.stem
+    if not track_dir.exists():
+        raise FileNotFoundError(f"Spleeter output dir not found: {track_dir}")
+
+    stems: dict[str, str] = {}
+    for stem in ("vocals", "drums", "bass", "other"):
+        candidate = track_dir / f"{stem}.wav"
+        if candidate.exists():
+            stems[stem] = str(candidate)
+
+    if "drums" not in stems:
+        raise FileNotFoundError(f"Drums stem was not created in: {track_dir}")
+
+    return {
+        "track_dir": str(track_dir),
+        "stems": stems,
+    }
+
+
 def bandpass_signal(y: np.ndarray, sr: int, low_freq: int, high_freq: int, n_fft: int = 2048, hop_length: int = 256) -> np.ndarray:
     d = librosa.stft(y, n_fft=n_fft, hop_length=hop_length)
     spectrum = np.abs(d)
@@ -234,3 +266,35 @@ def analyze_audio_file(
         "parts": part_files,
     }
 
+
+def run_song_pipeline(
+    song_path: str | Path,
+    output_dir: str | Path,
+    *,
+    start_time: float = 0.0,
+    duration: float | None = None,
+    plot: bool = True,
+    plot_chunk_sec: float = 8.0,
+) -> dict[str, Any]:
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    stems_root_dir = output_dir / "stems"
+    separation = separate_to_4stems(song_path=song_path, stems_root_dir=stems_root_dir)
+    drums_path = Path(separation["stems"]["drums"])
+
+    drums_analysis = analyze_audio_file(
+        audio_path=drums_path,
+        output_dir=output_dir,
+        start_time=start_time,
+        duration=duration,
+        plot=plot,
+        plot_chunk_sec=plot_chunk_sec,
+    )
+
+    return {
+        "input_song": str(song_path),
+        "drums_stem": str(drums_path),
+        "stems": separation["stems"],
+        **drums_analysis,
+    }
