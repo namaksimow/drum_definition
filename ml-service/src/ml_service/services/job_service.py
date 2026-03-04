@@ -35,6 +35,9 @@ class JobService:
     async def get_job(self, job_id: str) -> Job | None:
         return await self.repo.get(job_id)
 
+    async def list_jobs(self) -> list[Job]:
+        return await self.repo.list()
+
     async def submit_job_from_path(self, song_path: Path) -> Job:
         if not song_path.exists():
             raise FileNotFoundError(f"Song file not found: {song_path}")

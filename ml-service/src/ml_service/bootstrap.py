@@ -39,5 +39,5 @@ def get_container() -> Container:
         job_queue=job_queue,
         job_service=job_service,
     )
-    return _container
 
+    return _container

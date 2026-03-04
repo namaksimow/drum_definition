@@ -1,0 +1,34 @@
+:root {
+  --bg-a: #f9f6ef;
+  --bg-b: #e8dfcf;
+  --surface: #fffdf9;
+  --surface-2: #ffffff;
+  --line: #d8d1c2;
+  --text-main: #1f2937;
+  --text-muted: #4b5563;
+  --primary: #0f766e;
+  --primary-strong: #115e59;
+  --secondary: #374151;
+  --secondary-strong: #1f2937;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  color: var(--text-main);
+  background: linear-gradient(135deg, var(--bg-a), var(--bg-b));
+  min-height: 100vh;
+  padding: 24px;
+}
+

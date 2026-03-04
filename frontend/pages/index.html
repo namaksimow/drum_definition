@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Drum Tablature</title>
+  <link rel="stylesheet" href="/assets/styles/base.css" />
+  <link rel="stylesheet" href="/assets/styles/components.css" />
+  <link rel="stylesheet" href="/assets/styles/pages/index.css" />
+</head>
+<body>
+  <main class="layout">
+    <header class="hero">
+      <p class="hero__kicker">ML Drum Service</p>
+      <h1 class="hero__title">Генерация Табулатур</h1>
+      <p class="hero__subtitle">Загрузи трек и открой уже готовую PDF-табулатуру по `job_id`.</p>
+    </header>
+
+    <section class="panels">
+      <article class="panel">
+        <h2 class="panel__title">1. Загрузка Аудио</h2>
+        <label class="field-label" for="songFile">Файл с компьютера</label>
+        <input class="field-input" id="songFile" type="file" accept=".mp3,.wav" />
+        <button class="btn btn--primary" id="uploadBtn" type="button">Загрузить</button>
+      </article>
+
+      <article class="panel">
+        <h2 class="panel__title">2. Просмотр PDF</h2>
+        <label class="field-label" for="jobId">job_id задачи</label>
+        <input class="field-input" id="jobId" type="text" placeholder="Вставь job_id из шага 1" />
+        <button class="btn btn--secondary" id="pdfBtn" type="button">Открыть PDF</button>
+      </article>
+    </section>
+
+    <section class="status-panel">
+      <h3 class="status-panel__title">Статус</h3>
+      <pre class="status-panel__body" id="status">Готово к работе.</pre>
+    </section>
+
+    <section class="viewer">
+      <h3 class="viewer__title">PDF Табулатура</h3>
+      <iframe class="viewer__frame" id="pdfFrame" title="PDF tab"></iframe>
+    </section>
+  </main>
+
+  <script type="module" src="/assets/scripts/pages/index.js"></script>
+</body>
+</html>
+

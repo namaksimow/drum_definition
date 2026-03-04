@@ -23,6 +23,17 @@ async def create_job(file: UploadFile = File(...)) -> dict:
     return {"job": job.to_dict()}
 
 
+@router.get("/jobs")
+async def list_jobs() -> dict:
+    container = get_container()
+    jobs = await container.job_service.list_jobs()
+    return {
+        "count": len(jobs),
+        "job_ids": [job.id for job in jobs],
+        "jobs": [job.to_dict() for job in jobs],
+    }
+
+
 @router.get("/jobs/{job_id}")
 async def get_job(job_id: str) -> dict:
     container = get_container()

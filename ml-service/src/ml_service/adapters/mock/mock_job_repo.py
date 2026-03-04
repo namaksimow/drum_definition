@@ -19,6 +19,10 @@ class MockJobRepo(JobRepo):
         async with self._lock:
             return self._jobs.get(job_id)
 
+    async def list(self) -> list[Job]:
+        async with self._lock:
+            return sorted(self._jobs.values(), key=lambda j: j.created_at, reverse=True)
+
     async def update(
         self,
         job_id: str,
@@ -39,4 +43,3 @@ class MockJobRepo(JobRepo):
             job.error = error
             job.updated_at = utc_now_iso()
             return job
-

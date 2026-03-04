@@ -12,6 +12,9 @@ class JobRepo(Protocol):
     async def get(self, job_id: str) -> Job | None:
         ...
 
+    async def list(self) -> list[Job]:
+        ...
+
     async def update(
         self,
         job_id: str,
@@ -21,4 +24,3 @@ class JobRepo(Protocol):
         error: str | None = None,
     ) -> Job | None:
         ...
-
