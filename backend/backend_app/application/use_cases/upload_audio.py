@@ -9,16 +9,28 @@ class UploadAudioUseCase:
     def __init__(self, ml_service: MlServicePort) -> None:
         self.ml_service = ml_service
 
-    async def execute(self, *, filename: str | None, data: bytes, content_type: str) -> UploadedJob:
+    async def execute(
+        self,
+        *,
+        filename: str | None,
+        data: bytes,
+        content_type: str,
+        user_id: int | None = None,
+        tablature_name: str | None = None,
+    ) -> UploadedJob:
         if not filename:
             raise ValidationError("Filename is required")
         if not data:
             raise ValidationError("File is empty")
+        if not str(filename).lower().endswith(".mp3"):
+            raise ValidationError("Only .mp3 files are supported")
 
         payload = await self.ml_service.submit_upload(
             filename=filename,
             data=data,
             content_type=content_type or "application/octet-stream",
+            user_id=user_id,
+            tablature_name=tablature_name,
         )
         job = payload.get("job")
         if not isinstance(job, dict):
@@ -34,4 +46,3 @@ class UploadAudioUseCase:
             status=str(status),
             raw_payload=payload,
         )
-

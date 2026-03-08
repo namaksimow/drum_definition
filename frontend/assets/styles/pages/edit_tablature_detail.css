@@ -1,0 +1,165 @@
+.detail-page {
+  max-width: 1080px;
+  margin: 0 auto;
+  display: grid;
+  gap: 12px;
+}
+
+.detail-page__header {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.detail-page__back {
+  color: var(--primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.detail-page__back:hover {
+  text-decoration: underline;
+}
+
+.detail-page__title {
+  margin: 8px 0 6px;
+  font-size: 30px;
+}
+
+.detail-page__subtitle {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.panel__title {
+  margin: 0 0 10px;
+  font-size: 20px;
+}
+
+.panel__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.is-hidden {
+  display: none !important;
+}
+
+.panel__hint {
+  margin: 0 0 10px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.tab-editor {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.tab-editor--readonly .tab-cell {
+  cursor: default;
+}
+
+.tab-editor--readonly .tab-cell:hover {
+  border-color: transparent;
+  background: transparent;
+}
+
+.tab-line {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-2);
+  padding: 10px;
+}
+
+.tab-line__meta {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.tab-row {
+  display: grid;
+  grid-template-columns: 62px 1fr;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.tab-row:last-child {
+  margin-bottom: 0;
+}
+
+.tab-row__label {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.tab-row__pattern {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
+  font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+}
+
+.tab-row__pipe {
+  color: var(--text-muted);
+  font-weight: 700;
+  margin: 0 1px;
+}
+
+.tab-cell {
+  width: 22px;
+  height: 26px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+}
+
+.tab-cell:hover {
+  border-color: var(--line);
+  background: #f7f3ea;
+}
+
+.tab-cell--on {
+  color: var(--primary-strong);
+  background: #dff3f0;
+  border-color: #abd7d2;
+}
+
+.tab-cell--on:hover {
+  background: #d0ece8;
+}
+
+.status {
+  margin: 0;
+  min-height: 48px;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 720px) {
+  .tab-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}

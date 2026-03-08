@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Создание Табулатуры</title>
+  <link rel="stylesheet" href="/assets/styles/base.css" />
+  <link rel="stylesheet" href="/assets/styles/components.css" />
+  <link rel="stylesheet" href="/assets/styles/pages/create_tablature.css" />
+</head>
+<body>
+  <main class="create-page">
+    <header class="create-page__header">
+      <div>
+        <p class="create-page__kicker">Create</p>
+        <h1 class="create-page__title">Создание табулатуры</h1>
+        <p class="create-page__subtitle">Доступно всем. Принимается только MP3.</p>
+      </div>
+      <nav class="create-page__nav">
+        <a href="/">Главная</a>
+        <a href="/edit">Редактирование</a>
+        <a href="/account">Аккаунт</a>
+      </nav>
+    </header>
+
+    <section class="panel">
+      <h2 class="panel__title">Новый файл</h2>
+      <label class="field-label" for="fileInput">Файл MP3</label>
+      <input class="field-input" id="fileInput" type="file" accept=".mp3,audio/mpeg" />
+
+      <label class="field-label" for="titleInput">Название табулатуры</label>
+      <input class="field-input" id="titleInput" type="text" placeholder="Например: My Groove 120bpm" />
+
+      <label class="field-label" for="visibilitySelect">Видимость (при сохранении в библиотеку)</label>
+      <select class="field-input" id="visibilitySelect">
+        <option value="private">private</option>
+        <option value="public">public</option>
+      </select>
+
+      <div class="panel__actions">
+        <button class="btn btn--primary" id="createBtn" type="button">Создать табулатуру</button>
+        <button class="btn btn--secondary" id="saveBtn" type="button">Сохранить в личную библиотеку</button>
+      </div>
+      <p class="panel__text">Сохранение в личную библиотеку доступно после входа в аккаунт.</p>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel__title">Результат</h2>
+      <p class="panel__text">Текущий `job_id`: <strong id="jobIdText">-</strong></p>
+      <div class="panel__actions">
+        <button class="btn btn--secondary" id="pdfBtn" type="button">Скачать PDF</button>
+        <button class="btn btn--secondary" id="jsonBtn" type="button">Показать JSON</button>
+      </div>
+      <pre class="panel__json" id="jsonView">JSON пока не загружен.</pre>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel__title">Статус</h2>
+      <pre class="panel__status" id="status">Готово к работе.</pre>
+    </section>
+  </main>
+
+  <section class="progress-overlay is-hidden" id="progressOverlay" aria-live="polite" aria-busy="true">
+    <div class="progress-card">
+      <h2 class="progress-card__title">Создание табулатуры</h2>
+      <p class="progress-card__subtitle" id="progressText">Подготовка задачи...</p>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <p class="progress-card__percent" id="progressPercent">0%</p>
+      <p class="progress-card__hint">Не закрывай страницу. Обработка может занять несколько минут.</p>
+    </div>
+  </section>
+
+  <script type="module" src="/assets/scripts/pages/create_tablature.js?v=3"></script>
+</body>
+</html>

@@ -6,44 +6,116 @@
   <title>Drum Tablature</title>
   <link rel="stylesheet" href="/assets/styles/base.css" />
   <link rel="stylesheet" href="/assets/styles/components.css" />
-  <link rel="stylesheet" href="/assets/styles/pages/index.css" />
+  <link rel="stylesheet" href="/assets/styles/pages/index.css?v=2" />
 </head>
 <body>
-  <main class="layout">
-    <header class="hero">
-      <p class="hero__kicker">ML Drum Service</p>
-      <h1 class="hero__title">Генерация Табулатур</h1>
-      <p class="hero__subtitle">Загрузи трек и открой уже готовую PDF-табулатуру по `job_id`.</p>
-    </header>
+  <main class="app">
+    <aside class="menu">
+      <p class="menu__kicker">Drum Platform</p>
+      <h1 class="menu__title">Навигация</h1>
+      <button class="menu__btn menu__btn--active" type="button" data-view="community">
+        Библиотека сообщества
+      </button>
+      <button class="menu__btn" type="button" data-view="personal">
+        Личная библиотека
+      </button>
+      <div class="menu__links">
+        <a class="menu__linkbtn" href="/create">Создание табулатуры</a>
+        <a class="menu__linkbtn" href="/edit">Редактирование табулатуры</a>
+      </div>
+    </aside>
 
-    <section class="panels">
-      <article class="panel">
-        <h2 class="panel__title">1. Загрузка Аудио</h2>
-        <label class="field-label" for="songFile">Файл с компьютера</label>
-        <input class="field-input" id="songFile" type="file" accept=".mp3,.wav" />
-        <button class="btn btn--primary" id="uploadBtn" type="button">Загрузить</button>
-      </article>
+    <section class="workspace">
+      <header class="workspace-top">
+        <section class="auth-guest" id="authGuest">
+          <button class="btn btn--secondary" id="guestAuthToggleBtn" type="button">Вход</button>
 
-      <article class="panel">
-        <h2 class="panel__title">2. Просмотр PDF</h2>
-        <label class="field-label" for="jobId">job_id задачи</label>
-        <input class="field-input" id="jobId" type="text" placeholder="Вставь job_id из шага 1" />
-        <button class="btn btn--secondary" id="pdfBtn" type="button">Открыть PDF</button>
-      </article>
-    </section>
+          <section class="auth-guest__panel" id="guestAuthPanel">
+            <article class="auth-card">
+              <h3 class="auth-card__title">Вход</h3>
+              <label class="field-label" for="loginEmail">Email</label>
+              <input class="field-input" id="loginEmail" type="email" placeholder="you@example.com" />
+              <label class="field-label" for="loginPassword">Пароль</label>
+              <input class="field-input" id="loginPassword" type="password" placeholder="Твой пароль" />
+              <button class="btn btn--secondary" id="loginBtn" type="button">Войти</button>
+            </article>
 
-    <section class="status-panel">
-      <h3 class="status-panel__title">Статус</h3>
-      <pre class="status-panel__body" id="status">Готово к работе.</pre>
-    </section>
+            <article class="auth-card">
+              <h3 class="auth-card__title">Регистрация</h3>
+              <label class="field-label" for="registerEmail">Email</label>
+              <input class="field-input" id="registerEmail" type="email" placeholder="you@example.com" />
+              <label class="field-label" for="registerNickname">Nickname</label>
+              <input class="field-input" id="registerNickname" type="text" placeholder="drummer_nick" />
+              <label class="field-label" for="registerPassword">Пароль</label>
+              <input class="field-input" id="registerPassword" type="password" placeholder="Минимум 6 символов" />
+              <button class="btn btn--primary" id="registerBtn" type="button">Зарегистрироваться</button>
+            </article>
+          </section>
+        </section>
 
-    <section class="viewer">
-      <h3 class="viewer__title">PDF Табулатура</h3>
-      <iframe class="viewer__frame" id="pdfFrame" title="PDF tab"></iframe>
+        <div class="auth-user" id="authUser">
+          <button class="btn btn--secondary auth-user__toggle" id="accountMenuBtn" type="button">
+            <span id="authState">Аккаунт</span>
+          </button>
+          <div class="auth-user__menu" id="accountMenu">
+            <button class="auth-user__item" id="openAccountBtn" type="button">Личный аккаунт</button>
+            <button class="auth-user__item" id="logoutBtn" type="button">Выйти</button>
+          </div>
+        </div>
+      </header>
+
+      <section class="view-panel view-panel--active" data-view-panel="community">
+        <header class="hero">
+          <p class="hero__kicker">Community</p>
+          <h2 class="hero__title">Библиотека сообщества</h2>
+          <p class="hero__subtitle">Публичные табулатуры из сообщества: поиск и скачивание.</p>
+        </header>
+
+        <section class="community-tools">
+          <input
+            class="field-input community-tools__input"
+            id="communitySearch"
+            type="text"
+            placeholder="Поиск по названию трека или ID табулатуры"
+          />
+          <button class="btn btn--primary" id="communitySearchBtn" type="button">Поиск</button>
+          <button class="btn btn--secondary" id="communityClearBtn" type="button">Очистить</button>
+        </section>
+
+        <div class="cards" id="communityList">
+          <article class="card">
+            <h3 class="card__title">Нет данных</h3>
+            <p class="card__text">Пока нет публичных табулатур.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="view-panel" data-view-panel="personal">
+        <header class="hero">
+          <p class="hero__kicker">My Space</p>
+          <h2 class="hero__title">Личная библиотека</h2>
+          <p class="hero__subtitle" id="personalSubtitle">Доступна только авторизованному пользователю.</p>
+        </header>
+
+        <section class="community-tools">
+          <button class="btn btn--primary" id="personalRefreshBtn" type="button">Обновить</button>
+        </section>
+
+        <div class="cards" id="personalList">
+          <article class="card">
+            <h3 class="card__title">Нужна авторизация</h3>
+            <p class="card__text">Зарегистрируйся или войди, чтобы видеть личную библиотеку.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="status-panel">
+        <h3 class="status-panel__title">Статус</h3>
+        <pre class="status-panel__body" id="status">Готово к работе.</pre>
+      </section>
     </section>
   </main>
 
-  <script type="module" src="/assets/scripts/pages/index.js"></script>
+  <script type="module" src="/assets/scripts/pages/index.js?v=12"></script>
 </body>
 </html>
-

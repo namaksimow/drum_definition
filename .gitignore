@@ -15,5 +15,6 @@ tabs/
 
 backend/.venv
 postgresql/.venv
+postgresql/*.sql
 
 .vscode/

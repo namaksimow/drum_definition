@@ -11,7 +11,15 @@ class MockJobRepo(JobRepo):
         self._jobs: dict[str, Job] = {}
         self._lock = asyncio.Lock()
 
-    async def create(self, job: Job) -> None:
+    async def create(
+        self,
+        job: Job,
+        *,
+        owner_user_id: int | None = None,
+        track_title: str | None = None,
+    ) -> None:
+        _ = owner_user_id
+        _ = track_title
         async with self._lock:
             self._jobs[job.id] = job
 

@@ -1,6 +1,9 @@
 fastapi
 uvicorn[standard]
 python-multipart
+sqlalchemy
+asyncpg
+python-dotenv
 spleeter
 librosa
 numpy

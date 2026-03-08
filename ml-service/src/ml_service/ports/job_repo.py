@@ -6,7 +6,13 @@ from ml_service.domain.models import Job, JobStatus
 
 
 class JobRepo(Protocol):
-    async def create(self, job: Job) -> None:
+    async def create(
+        self,
+        job: Job,
+        *,
+        owner_user_id: int | None = None,
+        track_title: str | None = None,
+    ) -> None:
         ...
 
     async def get(self, job_id: str) -> Job | None:

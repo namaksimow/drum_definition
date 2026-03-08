@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Community Tablature</title>
+  <link rel="stylesheet" href="/assets/styles/base.css" />
+  <link rel="stylesheet" href="/assets/styles/components.css" />
+  <link rel="stylesheet" href="/assets/styles/pages/community_tablature.css?v=2" />
+</head>
+<body>
+  <main class="tab-page">
+    <header class="tab-page__header">
+      <a class="tab-page__back" href="/">← Назад в библиотеку</a>
+      <h1 class="tab-page__title">Просмотр табулатуры сообщества</h1>
+      <p class="tab-page__meta" id="meta">Загрузка...</p>
+    </header>
+
+    <section class="tab-page__layout">
+      <section class="tab-page__body">
+        <h2 class="tab-page__subtitle">Табулатура</h2>
+        <pre class="tab-page__tab" id="tabView">Загрузка...</pre>
+      </section>
+
+      <aside class="social-panel">
+        <section class="social-panel__section">
+          <h2 class="social-panel__title">Реакции</h2>
+          <div class="reaction-buttons">
+            <button class="btn btn--secondary reaction-btn" type="button" data-reaction="like" id="reactionLikeBtn">
+              <img class="reaction-btn__icon" src="/assets/images/reactions/like.svg" alt="Like" loading="lazy" onerror="this.style.display='none'" />
+              <span>Like</span>
+              <span id="reactionLikeCount">0</span>
+            </button>
+            <button class="btn btn--secondary reaction-btn" type="button" data-reaction="fire" id="reactionFireBtn">
+              <img class="reaction-btn__icon" src="/assets/images/reactions/fire.svg" alt="Fire" loading="lazy" onerror="this.style.display='none'" />
+              <span>Fire</span>
+              <span id="reactionFireCount">0</span>
+            </button>
+            <button class="btn btn--secondary reaction-btn" type="button" data-reaction="wow" id="reactionWowBtn">
+              <img class="reaction-btn__icon" src="/assets/images/reactions/wow.svg" alt="Wow" loading="lazy" onerror="this.style.display='none'" />
+              <span>Wow</span>
+              <span id="reactionWowCount">0</span>
+            </button>
+          </div>
+          <p class="social-panel__hint" id="reactionHint">Войди в аккаунт, чтобы оставлять реакции.</p>
+        </section>
+
+        <section class="social-panel__section">
+          <h2 class="social-panel__title social-panel__title--with-icon">
+            <img class="social-panel__title-icon" src="/assets/images/reactions/comment.svg" alt="Комментарии" loading="lazy" onerror="this.style.display='none'" />
+            <span>Комментарии</span>
+          </h2>
+          <div class="comments-list" id="commentsList">Загрузка комментариев...</div>
+          <div class="comment-form">
+            <textarea class="comment-form__input" id="commentInput" placeholder="Оставь комментарий к табулатуре"></textarea>
+            <button class="btn btn--primary comment-form__submit" id="commentSubmitBtn" type="button">
+              <img class="comment-form__submit-icon" src="/assets/images/reactions/comment.svg" alt="Комментарий" loading="lazy" onerror="this.style.display='none'" />
+              <span>Оставить комментарий</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="social-panel__section">
+          <h2 class="social-panel__title">Статус</h2>
+          <pre class="social-panel__status" id="status">Готово.</pre>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script type="module" src="/assets/scripts/pages/community_tablature.js?v=4"></script>
+</body>
+</html>

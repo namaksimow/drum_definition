@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import argparse
-import asyncio
 import re
 import subprocess
 import sys
 from pathlib import Path
 
-import asyncpg
+from sqlalchemy import create_engine, text
 from sqlalchemy.engine.url import make_url
 
 from app.config import get_settings
@@ -22,33 +21,23 @@ def _safe_db_name(name: str) -> str:
     return name
 
 
-async def _create_database_if_not_exists_async() -> None:
+def create_database_if_not_exists() -> None:
     settings = get_settings()
     url = make_url(settings.database_url)
     if not url.database:
         raise ValueError("DATABASE_URL must include database name")
 
     db_name = _safe_db_name(url.database)
-    conn = await asyncpg.connect(
-        user=url.username,
-        password=url.password,
-        database="postgres",
-        host=url.host or "localhost",
-        port=url.port or 5432,
-    )
-    try:
-        exists = await conn.fetchval("SELECT 1 FROM pg_database WHERE datname = $1", db_name)
+    admin_url = url.set(database="postgres")
+    engine = create_engine(admin_url.render_as_string(hide_password=False), isolation_level="AUTOCOMMIT", future=True)
+
+    with engine.connect() as conn:
+        exists = conn.execute(text("SELECT 1 FROM pg_database WHERE datname = :name"), {"name": db_name}).scalar()
         if exists:
             print(f"[create-db] Database already exists: {db_name}")
             return
-        await conn.execute(f'CREATE DATABASE "{db_name}"')
+        conn.execute(text(f'CREATE DATABASE "{db_name}"'))
         print(f"[create-db] Database created: {db_name}")
-    finally:
-        await conn.close()
-
-
-def create_database_if_not_exists() -> None:
-    asyncio.run(_create_database_if_not_exists_async())
 
 
 def run_alembic(*args: str) -> None:
@@ -68,7 +57,6 @@ def main() -> None:
 
     rev_parser = sub.add_parser("revision", help="Create new Alembic revision")
     rev_parser.add_argument("-m", "--message", required=True, help="Revision message")
-    rev_parser.add_argument("--empty", action="store_true", help="Create empty revision (without autogenerate)")
 
     args = parser.parse_args()
 
@@ -85,10 +73,7 @@ def main() -> None:
         return
 
     if args.command == "revision":
-        if args.empty:
-            run_alembic("revision", "-m", args.message)
-        else:
-            run_alembic("revision", "--autogenerate", "-m", args.message)
+        run_alembic("revision", "-m", args.message)
         return
 
 

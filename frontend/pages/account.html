@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Личный Аккаунт</title>
+  <link rel="stylesheet" href="/assets/styles/base.css" />
+  <link rel="stylesheet" href="/assets/styles/components.css" />
+  <link rel="stylesheet" href="/assets/styles/pages/account.css" />
+</head>
+<body>
+  <main class="account-page">
+    <header class="account-page__header">
+      <a class="account-page__back" href="/">← На главную</a>
+      <h1 class="account-page__title">Личный аккаунт</h1>
+      <p class="account-page__subtitle" id="accountSubtitle">Загрузка профиля...</p>
+    </header>
+
+    <section class="account-grid" id="accountContent">
+      <article class="panel">
+        <h2 class="panel__title">Профиль</h2>
+        <p class="panel__text"><strong>Email:</strong> <span id="profileEmail">-</span></p>
+        <p class="panel__text"><strong>Никнейм:</strong> <span id="profileNickname">-</span></p>
+        <p class="panel__text"><strong>Роль:</strong> <span id="profileRole">-</span></p>
+
+        <label class="field-label" for="nicknameInput">Изменить никнейм</label>
+        <input class="field-input" id="nicknameInput" type="text" placeholder="Новый nickname" />
+        <div class="panel__actions">
+          <button class="btn btn--primary" id="saveNicknameBtn" type="button">Сохранить</button>
+          <button class="btn btn--secondary" id="logoutBtn" type="button">Выйти</button>
+        </div>
+      </article>
+
+      <article class="panel">
+        <h2 class="panel__title">Мои Табулатуры</h2>
+        <div class="library-tools">
+          <input class="field-input library-tools__input" id="searchInput" type="text" placeholder="Поиск по названию или ID" />
+          <button class="btn btn--secondary" id="searchBtn" type="button">Поиск</button>
+          <button class="btn btn--secondary" id="resetBtn" type="button">Сброс</button>
+        </div>
+        <div class="cards" id="personalList">
+          <article class="card">
+            <h3 class="card__title">Нет данных</h3>
+            <p class="card__text">Пока нет сохраненных табулатур.</p>
+          </article>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel__title">Статус</h2>
+      <pre class="status" id="status">Готово к работе.</pre>
+    </section>
+  </main>
+
+  <script type="module" src="/assets/scripts/pages/account.js?v=2"></script>
+</body>
+</html>

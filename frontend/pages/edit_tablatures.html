@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Редактирование Табулатур</title>
+  <link rel="stylesheet" href="/assets/styles/base.css" />
+  <link rel="stylesheet" href="/assets/styles/components.css" />
+  <link rel="stylesheet" href="/assets/styles/pages/edit_tablatures.css" />
+</head>
+<body>
+  <main class="edit-page">
+    <header class="edit-page__header">
+      <div>
+        <p class="edit-page__kicker">Edit</p>
+        <h1 class="edit-page__title">Редактирование табулатур</h1>
+        <p class="edit-page__subtitle">Страница доступна только зарегистрированному пользователю.</p>
+      </div>
+      <nav class="edit-page__nav">
+        <a href="/">Главная</a>
+        <a href="/create">Создание</a>
+        <a href="/account">Аккаунт</a>
+      </nav>
+    </header>
+
+    <section class="panel" id="authGuard">
+      <h2 class="panel__title">Нужна авторизация</h2>
+      <p class="panel__text">Выполни вход на главной странице, затем вернись сюда.</p>
+      <div class="panel__actions">
+        <a class="btn btn--secondary" href="/">На главную</a>
+      </div>
+    </section>
+
+    <section class="panel" id="editorContent">
+      <h2 class="panel__title">Мои табулатуры</h2>
+      <div class="tools">
+        <input class="field-input tools__input" id="searchInput" type="text" placeholder="Поиск по названию или ID" />
+        <button class="btn btn--secondary" id="searchBtn" type="button">Поиск</button>
+        <button class="btn btn--secondary" id="resetBtn" type="button">Сброс</button>
+      </div>
+
+      <div class="cards" id="list"></div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel__title">Статус</h2>
+      <pre class="status" id="status">Готово к работе.</pre>
+    </section>
+  </main>
+
+  <script type="module" src="/assets/scripts/pages/edit_tablatures.js?v=3"></script>
+</body>
+</html>

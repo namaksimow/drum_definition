@@ -9,6 +9,10 @@ class ValidationError(BackendError):
     """Validation failed."""
 
 
+class AuthenticationError(BackendError):
+    """Authentication failed."""
+
+
 class NotFoundError(BackendError):
     """Entity or file was not found."""
 
@@ -23,4 +27,3 @@ class ExternalServiceError(BackendError):
 
 class DataIntegrityError(BackendError):
     """Required data is missing or inconsistent."""
-

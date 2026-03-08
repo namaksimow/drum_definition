@@ -9,6 +9,7 @@ from pathlib import Path
 @dataclass(frozen=True)
 class Settings:
     ml_service_url: str
+    postgres_service_url: str
     ml_service_timeout_sec: float
     frontend_dir: Path
 
@@ -20,7 +21,7 @@ def get_settings() -> Settings:
     
     return Settings(
         ml_service_url=os.getenv("ML_SERVICE_URL", "http://127.0.0.1:8000"),
+        postgres_service_url=os.getenv("POSTGRES_SERVICE_URL", "http://127.0.0.1:8090"),
         ml_service_timeout_sec=float(os.getenv("BACKEND_HTTP_TIMEOUT_SEC", "120.0")),
         frontend_dir=repo_root / "frontend",
     )
-
