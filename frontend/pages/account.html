@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Личный Аккаунт</title>
   <link rel="stylesheet" href="/assets/styles/base.css" />
-  <link rel="stylesheet" href="/assets/styles/components.css" />
-  <link rel="stylesheet" href="/assets/styles/pages/account.css" />
+  <link rel="stylesheet" href="/assets/styles/components.css?v=5" />
+  <link rel="stylesheet" href="/assets/styles/pages/account.css?v=4" />
 </head>
 <body>
   <main class="account-page">
@@ -29,6 +29,15 @@
           <button class="btn btn--primary" id="saveNicknameBtn" type="button">Сохранить</button>
           <button class="btn btn--secondary" id="logoutBtn" type="button">Выйти</button>
         </div>
+
+        <section class="author-request" id="authorRequestPanel">
+          <h3 class="author-request__title">Заявка на роль автора</h3>
+          <p class="author-request__hint" id="authorRequestInfo">Загружаю статус заявки...</p>
+          <p class="author-request__admin-message is-hidden" id="authorRequestAdminMessage"></p>
+          <label class="field-label" for="authorRequestMessage">Сообщение администратору</label>
+          <textarea class="field-input author-request__textarea" id="authorRequestMessage" placeholder="Расскажи, почему хочешь получить роль автора"></textarea>
+          <button class="btn btn--primary" id="authorRequestSendBtn" type="button">Отправить заявку</button>
+        </section>
       </article>
 
       <article class="panel">
@@ -47,12 +56,28 @@
       </article>
     </section>
 
+    <section class="panel is-hidden" id="authorCoursesPanel">
+      <h2 class="panel__title">Мои Курсы</h2>
+      <div class="library-tools">
+        <input class="field-input library-tools__input" id="courseSearchInput" type="text" placeholder="Поиск по названию, тегам или ID" />
+        <button class="btn btn--secondary" id="courseSearchBtn" type="button">Поиск</button>
+        <button class="btn btn--secondary" id="courseResetBtn" type="button">Сброс</button>
+        <a class="btn btn--primary" href="/courses/create">Добавить курс</a>
+      </div>
+      <div class="cards" id="authorCoursesList">
+        <article class="card">
+          <h3 class="card__title">Нет данных</h3>
+          <p class="card__text">Список курсов загружается...</p>
+        </article>
+      </div>
+    </section>
+
     <section class="panel">
       <h2 class="panel__title">Статус</h2>
       <pre class="status" id="status">Готово к работе.</pre>
     </section>
   </main>
 
-  <script type="module" src="/assets/scripts/pages/account.js?v=2"></script>
+  <script type="module" src="/assets/scripts/pages/account.js?v=10"></script>
 </body>
 </html>

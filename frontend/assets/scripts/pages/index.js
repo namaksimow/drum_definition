@@ -2,6 +2,8 @@ import * as api from "../services/api.js?v=9";
 
 const AUTH_TOKEN_KEY = "drum_auth_token";
 const AUTH_USER_KEY = "drum_auth_user";
+const ADMIN_CONSOLE_PATH = "/admin/console";
+const AUTH_PAGE_PATH = "/auth";
 
 const authState = {
   token: "",
@@ -114,6 +116,18 @@ function isAuthenticated() {
   return Boolean(authState.token && authState.user);
 }
 
+function isAdminUser(user) {
+  const role = String(user?.role || "").toLowerCase();
+  const email = String(user?.email || "").toLowerCase();
+  return role === "admin" || email === "admin@mail.ru";
+}
+
+function redirectAfterAuthIfAdmin() {
+  if (!isAdminUser(authState.user)) return;
+  if (window.location.pathname.startsWith("/admin")) return;
+  window.location.href = ADMIN_CONSOLE_PATH;
+}
+
 function updateAuthDependentHints() {
   const authenticated = isAuthenticated();
   if (personalSubtitle) {
@@ -159,6 +173,19 @@ function saveAuthState(token, user) {
   renderAuthState();
 }
 
+async function hydrateUserFromToken() {
+  if (!authState.token) return;
+  try {
+    const payload = await api.fetchAuthMe(authState.token);
+    const user = payload && payload.user ? payload.user : null;
+    if (user) {
+      saveAuthState(authState.token, user);
+    }
+  } catch {
+    // no-op: keep user from login payload
+  }
+}
+
 function loadAuthStateFromStorage() {
   const token = localStorage.getItem(AUTH_TOKEN_KEY) || "";
   const userRaw = localStorage.getItem(AUTH_USER_KEY);
@@ -190,6 +217,9 @@ function renderAuthState() {
     } else {
       authStateEl.textContent = authState.user.nickname || authState.user.email || "Аккаунт";
     }
+  }
+  if (openAccountBtn) {
+    openAccountBtn.classList.toggle("is-hidden", authenticated && isAdminUser(authState.user));
   }
 
   if (!authenticated) {
@@ -437,8 +467,10 @@ if (registerBtn) {
       await api.registerUser({ email, password, nickname });
       const loginPayload = await api.loginUser({ email, password });
       saveAuthState(loginPayload.access_token || "", loginPayload.user || null);
+      await hydrateUserFromToken();
       closeGuestAuthPanel();
       setStatus("Регистрация и вход выполнены.");
+      redirectAfterAuthIfAdmin();
       await loadPersonalTablatures();
     } catch (error) {
       setStatus(`Ошибка регистрации:\n${getErrorMessage(error)}`);
@@ -462,8 +494,10 @@ if (loginBtn) {
       setStatus("Вход...");
       const payload = await api.loginUser({ email, password });
       saveAuthState(payload.access_token || "", payload.user || null);
+      await hydrateUserFromToken();
       closeGuestAuthPanel();
       setStatus("Вход выполнен.");
+      redirectAfterAuthIfAdmin();
       await loadPersonalTablatures();
     } catch (error) {
       setStatus(`Ошибка входа:\n${getErrorMessage(error)}`);
@@ -485,19 +519,17 @@ if (accountMenuBtn) {
 }
 
 if (guestAuthToggleBtn) {
-  guestAuthToggleBtn.addEventListener("click", () => {
+  guestAuthToggleBtn.addEventListener("click", (event) => {
+    event.preventDefault();
     if (isAuthenticated()) return;
-    if (guestAuthPanel && guestAuthPanel.classList.contains("auth-guest__panel--open")) {
-      closeGuestAuthPanel();
-    } else {
-      openGuestAuthPanel();
-    }
+    window.location.href = AUTH_PAGE_PATH;
   });
 }
 
 if (openAccountBtn) {
   openAccountBtn.addEventListener("click", () => {
     closeAccountMenu();
+    if (isAdminUser(authState.user)) return;
     window.location.href = "/account";
   });
 }
@@ -506,7 +538,7 @@ if (logoutBtn) {
   logoutBtn.addEventListener("click", () => {
     saveAuthState("", null);
     renderPersonalList([]);
-    setStatus("Выход выполнен.");
+    window.location.href = AUTH_PAGE_PATH;
   });
 }
 
@@ -611,6 +643,7 @@ async function init() {
   loadAuthStateFromStorage();
   renderAuthState();
   await refreshAuthFromToken();
+  redirectAfterAuthIfAdmin();
   const hashView = String(window.location.hash || "").replace("#", "").trim().toLowerCase();
   if (hashView === "personal") {
     activateView("personal");

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from typing import Optional
+from pathlib import Path
+from typing import List, Optional
+from uuid import uuid4
 
 from fastapi import APIRouter, File, Form, Header, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse, Response
@@ -25,6 +27,15 @@ class UpdateMeRequest(BaseModel):
     nickname: str = Field(min_length=1, max_length=64)
 
 
+class CreateAuthorRoleRequestPayload(BaseModel):
+    message: str = Field(min_length=1, max_length=5000)
+
+
+class UpdateAdminAuthorRoleRequestPayload(BaseModel):
+    status: str = Field(min_length=1, max_length=32)
+    admin_message: Optional[str] = Field(default=None, max_length=5000)
+
+
 class UpdatePersonalTablatureRequest(BaseModel):
     track_file_name: Optional[str] = Field(default=None, max_length=255)
     visibility: Optional[str] = Field(default=None, max_length=64)
@@ -39,6 +50,38 @@ class SetPublicReactionRequest(BaseModel):
     reaction_type: str = Field(min_length=1, max_length=32)
 
 
+class CreateCourseRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=255)
+    description: Optional[str] = Field(default=None, max_length=5000)
+    visibility: Optional[str] = Field(default="public", max_length=64)
+    tags: List[str] = Field(default_factory=list)
+    cover_image_path: Optional[str] = Field(default=None, max_length=1000)
+
+
+class UpdatePersonalCourseRequest(BaseModel):
+    title: Optional[str] = Field(default=None, max_length=255)
+    description: Optional[str] = Field(default=None, max_length=5000)
+    visibility: Optional[str] = Field(default=None, max_length=64)
+    tags: Optional[List[str]] = None
+    cover_image_path: Optional[str] = Field(default=None, max_length=1000)
+
+
+class CreateCourseLessonRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=255)
+    content: Optional[str] = Field(default="", max_length=20000)
+    position: Optional[int] = Field(default=None, ge=1)
+
+
+class UpdateCourseLessonRequest(BaseModel):
+    title: Optional[str] = Field(default=None, max_length=255)
+    content: Optional[str] = Field(default=None, max_length=20000)
+    position: Optional[int] = Field(default=None, ge=1)
+
+
+class SetLessonProgressRequest(BaseModel):
+    completed: bool
+
+
 def _extract_bearer_token(authorization: Optional[str]) -> str:
     if authorization is None:
         raise HTTPException(status_code=401, detail="Authorization header is required")
@@ -48,6 +91,17 @@ def _extract_bearer_token(authorization: Optional[str]) -> str:
     return parts[1].strip()
 
 
+def _html_file_response(path: Path) -> FileResponse:
+    return FileResponse(
+        path,
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
+
+
 def build_router(container: Container) -> APIRouter:
     router = APIRouter()
 
@@ -55,7 +109,7 @@ def build_router(container: Container) -> APIRouter:
     async def index() -> FileResponse:
         try:
             index_path = container.get_index_page.execute()
-            return FileResponse(index_path)
+            return _html_file_response(index_path)
         except Exception as exc:  # noqa: BLE001
             raise to_http_exception(exc) from exc
 
@@ -64,7 +118,7 @@ def build_router(container: Container) -> APIRouter:
         _ = tablature_id
         try:
             page_path = container.settings.frontend_dir / "pages" / "community_tablature.html"
-            return FileResponse(page_path)
+            return _html_file_response(page_path)
         except Exception as exc:  # noqa: BLE001
             raise to_http_exception(exc) from exc
 
@@ -72,7 +126,23 @@ def build_router(container: Container) -> APIRouter:
     async def account_page() -> FileResponse:
         try:
             page_path = container.settings.frontend_dir / "pages" / "account.html"
-            return FileResponse(page_path)
+            return _html_file_response(page_path)
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.get("/admin")
+    async def admin_page() -> FileResponse:
+        try:
+            page_path = container.settings.frontend_dir / "pages" / "admin.html"
+            return _html_file_response(page_path)
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.get("/admin/console")
+    async def admin_console_page() -> FileResponse:
+        try:
+            page_path = container.settings.frontend_dir / "pages" / "admin.html"
+            return _html_file_response(page_path)
         except Exception as exc:  # noqa: BLE001
             raise to_http_exception(exc) from exc
 
@@ -80,7 +150,15 @@ def build_router(container: Container) -> APIRouter:
     async def create_tablature_page() -> FileResponse:
         try:
             page_path = container.settings.frontend_dir / "pages" / "create_tablature.html"
-            return FileResponse(page_path)
+            return _html_file_response(page_path)
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.get("/auth")
+    async def auth_page() -> FileResponse:
+        try:
+            page_path = container.settings.frontend_dir / "pages" / "auth.html"
+            return _html_file_response(page_path)
         except Exception as exc:  # noqa: BLE001
             raise to_http_exception(exc) from exc
 
@@ -88,7 +166,50 @@ def build_router(container: Container) -> APIRouter:
     async def edit_tablature_page() -> FileResponse:
         try:
             page_path = container.settings.frontend_dir / "pages" / "edit_tablatures.html"
-            return FileResponse(page_path)
+            return _html_file_response(page_path)
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.get("/courses")
+    async def courses_page() -> FileResponse:
+        try:
+            page_path = container.settings.frontend_dir / "pages" / "courses.html"
+            return _html_file_response(page_path)
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.get("/courses/create")
+    async def create_course_page() -> FileResponse:
+        try:
+            page_path = container.settings.frontend_dir / "pages" / "course_create.html"
+            return _html_file_response(page_path)
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.get("/courses/edit/{course_id}")
+    async def edit_course_page(course_id: int) -> FileResponse:
+        _ = course_id
+        try:
+            page_path = container.settings.frontend_dir / "pages" / "course_edit.html"
+            return _html_file_response(page_path)
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.get("/courses/{course_id}/stats")
+    async def course_stats_page(course_id: int) -> FileResponse:
+        _ = course_id
+        try:
+            page_path = container.settings.frontend_dir / "pages" / "course_stats.html"
+            return _html_file_response(page_path)
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.get("/courses/{course_id}")
+    async def course_detail_page(course_id: int) -> FileResponse:
+        _ = course_id
+        try:
+            page_path = container.settings.frontend_dir / "pages" / "course_detail.html"
+            return _html_file_response(page_path)
         except Exception as exc:  # noqa: BLE001
             raise to_http_exception(exc) from exc
 
@@ -97,7 +218,7 @@ def build_router(container: Container) -> APIRouter:
         _ = tablature_id
         try:
             page_path = container.settings.frontend_dir / "pages" / "edit_tablature_detail.html"
-            return FileResponse(page_path)
+            return _html_file_response(page_path)
         except Exception as exc:  # noqa: BLE001
             raise to_http_exception(exc) from exc
 
@@ -195,6 +316,141 @@ def build_router(container: Container) -> APIRouter:
         except Exception as exc:  # noqa: BLE001
             raise to_http_exception(exc) from exc
 
+    @router.get("/api/courses")
+    async def list_public_courses(
+        q: Optional[str] = Query(default=None),
+        limit: int = Query(default=50, ge=1, le=200),
+        offset: int = Query(default=0, ge=0),
+    ) -> dict:
+        try:
+            items = await container.list_public_courses.execute(query=q, limit=limit, offset=offset)
+            return {
+                "count": len(items),
+                "items": [
+                    {
+                        "id": item.id,
+                        "title": item.title,
+                        "description": item.description,
+                        "author": item.author,
+                        "visibility": item.visibility,
+                        "tags": item.tags,
+                        "cover_image_path": item.cover_image_path,
+                        "created_at": item.created_at,
+                        "updated_at": item.updated_at,
+                    }
+                    for item in items
+                ],
+            }
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.get("/api/community/courses/{course_id}/lessons")
+    async def list_public_course_lessons(course_id: int) -> dict:
+        try:
+            items = await container.list_public_course_lessons.execute(course_id=course_id)
+            return {
+                "count": len(items),
+                "items": [
+                    {
+                        "id": item.id,
+                        "course_id": item.course_id,
+                        "title": item.title,
+                        "content": item.content,
+                        "position": item.position,
+                        "created_at": item.created_at,
+                        "updated_at": item.updated_at,
+                    }
+                    for item in items
+                ],
+            }
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.post("/api/courses")
+    async def create_course(
+        payload: CreateCourseRequest,
+        authorization: Optional[str] = Header(default=None),
+    ) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            course = await container.create_course.execute(
+                token=token,
+                title=payload.title,
+                description=payload.description,
+                visibility=payload.visibility,
+                tags=payload.tags,
+                cover_image_path=payload.cover_image_path,
+            )
+            return {
+                "course": {
+                    "id": course.id,
+                    "title": course.title,
+                    "description": course.description,
+                    "author": course.author,
+                    "visibility": course.visibility,
+                    "tags": course.tags,
+                    "cover_image_path": course.cover_image_path,
+                    "created_at": course.created_at,
+                    "updated_at": course.updated_at,
+                }
+            }
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.post("/api/courses/cover")
+    async def upload_course_cover(
+        file: UploadFile = File(...),
+        authorization: Optional[str] = Header(default=None),
+    ) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            user = await container.get_current_user.execute(token=token)
+            if str(user.get("role") or "").strip().lower() != "author":
+                raise HTTPException(status_code=403, detail="Only author can upload course cover")
+
+            content_type = str(file.content_type or "").lower()
+            if not content_type.startswith("image/"):
+                raise HTTPException(status_code=400, detail="Unsupported file type. Image required")
+
+            data = await file.read()
+            if not data:
+                raise HTTPException(status_code=400, detail="Uploaded image is empty")
+            if len(data) > 5 * 1024 * 1024:
+                raise HTTPException(status_code=400, detail="Image is too large (max 5MB)")
+
+            suffix = Path(file.filename or "").suffix.lower()
+            allowed_suffixes = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg"}
+            if suffix not in allowed_suffixes:
+                content_type_to_suffix = {
+                    "image/jpeg": ".jpg",
+                    "image/png": ".png",
+                    "image/webp": ".webp",
+                    "image/gif": ".gif",
+                    "image/svg+xml": ".svg",
+                }
+                suffix = content_type_to_suffix.get(content_type, "")
+            if suffix not in allowed_suffixes:
+                raise HTTPException(status_code=400, detail="Unsupported image format")
+
+            assets_dir = Path(container.frontend_assets_dir)
+            cover_dir = assets_dir / "images" / "courses"
+            cover_dir.mkdir(parents=True, exist_ok=True)
+
+            file_name = f"{uuid4().hex}{suffix}"
+            save_path = cover_dir / file_name
+            save_path.write_bytes(data)
+            return {"cover_image_path": f"/assets/images/courses/{file_name}"}
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
     @router.get("/api/personal/tablatures")
     async def list_personal_tablatures(
         authorization: Optional[str] = Header(default=None),
@@ -224,6 +480,329 @@ def build_router(container: Container) -> APIRouter:
                     for item in items
                 ],
             }
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.get("/api/personal/courses")
+    async def list_personal_courses(
+        authorization: Optional[str] = Header(default=None),
+        q: Optional[str] = Query(default=None),
+        limit: int = Query(default=50, ge=1, le=200),
+        offset: int = Query(default=0, ge=0),
+    ) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            items = await container.list_personal_courses.execute(
+                token=token,
+                query=q,
+                limit=limit,
+                offset=offset,
+            )
+            return {
+                "count": len(items),
+                "items": [
+                    {
+                        "id": item.id,
+                        "title": item.title,
+                        "description": item.description,
+                        "author": item.author,
+                        "visibility": item.visibility,
+                        "tags": item.tags,
+                        "cover_image_path": item.cover_image_path,
+                        "created_at": item.created_at,
+                        "updated_at": item.updated_at,
+                    }
+                    for item in items
+                ],
+            }
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.patch("/api/personal/courses/{course_id}")
+    async def patch_personal_course(
+        course_id: int,
+        payload: UpdatePersonalCourseRequest,
+        authorization: Optional[str] = Header(default=None),
+    ) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            course = await container.update_personal_course.execute(
+                token=token,
+                course_id=course_id,
+                title=payload.title,
+                description=payload.description,
+                visibility=payload.visibility,
+                tags=payload.tags,
+                cover_image_path=payload.cover_image_path,
+            )
+            return {
+                "course": {
+                    "id": course.id,
+                    "title": course.title,
+                    "description": course.description,
+                    "author": course.author,
+                    "visibility": course.visibility,
+                    "tags": course.tags,
+                    "cover_image_path": course.cover_image_path,
+                    "created_at": course.created_at,
+                    "updated_at": course.updated_at,
+                }
+            }
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.delete("/api/personal/courses/{course_id}")
+    async def delete_personal_course(
+        course_id: int,
+        authorization: Optional[str] = Header(default=None),
+    ) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            deleted = await container.delete_personal_course.execute(
+                token=token,
+                course_id=course_id,
+            )
+            return {"deleted": bool(deleted)}
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.get("/api/personal/courses/{course_id}/lessons")
+    async def list_personal_course_lessons(
+        course_id: int,
+        authorization: Optional[str] = Header(default=None),
+    ) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            items = await container.list_personal_course_lessons.execute(
+                token=token,
+                course_id=course_id,
+            )
+            return {
+                "count": len(items),
+                "items": [
+                    {
+                        "id": item.id,
+                        "course_id": item.course_id,
+                        "title": item.title,
+                        "content": item.content,
+                        "position": item.position,
+                        "created_at": item.created_at,
+                        "updated_at": item.updated_at,
+                    }
+                    for item in items
+                ],
+            }
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.get("/api/personal/courses/{course_id}/lessons/progress")
+    async def list_personal_course_lesson_progress(
+        course_id: int,
+        authorization: Optional[str] = Header(default=None),
+    ) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            items = await container.list_personal_course_lesson_progress.execute(
+                token=token,
+                course_id=course_id,
+            )
+            return {
+                "count": len(items),
+                "items": [
+                    {
+                        "lesson_id": item.lesson_id,
+                        "is_completed": item.is_completed,
+                        "completed_at": item.completed_at,
+                        "updated_at": item.updated_at,
+                    }
+                    for item in items
+                ],
+            }
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.post("/api/personal/courses/{course_id}/visit")
+    async def track_personal_course_visit(
+        course_id: int,
+        authorization: Optional[str] = Header(default=None),
+    ) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            visit = await container.track_personal_course_visit.execute(
+                token=token,
+                course_id=course_id,
+            )
+            return {
+                "visit": {
+                    "user_id": visit.user_id,
+                    "course_id": visit.course_id,
+                    "is_first_visit": visit.is_first_visit,
+                    "first_visit_at": visit.first_visit_at,
+                }
+            }
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.get("/api/personal/courses/{course_id}/stats")
+    async def get_personal_course_statistics(
+        course_id: int,
+        authorization: Optional[str] = Header(default=None),
+    ) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            stats = await container.get_personal_course_statistics.execute(
+                token=token,
+                course_id=course_id,
+            )
+            return {
+                "stats": {
+                    "course_id": stats.course_id,
+                    "course_title": stats.course_title,
+                    "visitors": [
+                        {
+                            "user_id": item.user_id,
+                            "user_name": item.user_name,
+                            "first_visit_at": item.first_visit_at,
+                        }
+                        for item in stats.visitors
+                    ],
+                    "lesson_completions": [
+                        {
+                            "user_id": item.user_id,
+                            "user_name": item.user_name,
+                            "lesson_id": item.lesson_id,
+                            "lesson_title": item.lesson_title,
+                            "completed_at": item.completed_at,
+                        }
+                        for item in stats.lesson_completions
+                    ],
+                }
+            }
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.post("/api/personal/courses/{course_id}/lessons")
+    async def create_personal_course_lesson(
+        course_id: int,
+        payload: CreateCourseLessonRequest,
+        authorization: Optional[str] = Header(default=None),
+    ) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            lesson = await container.create_personal_course_lesson.execute(
+                token=token,
+                course_id=course_id,
+                title=payload.title,
+                content=payload.content,
+                position=payload.position,
+            )
+            return {
+                "lesson": {
+                    "id": lesson.id,
+                    "course_id": lesson.course_id,
+                    "title": lesson.title,
+                    "content": lesson.content,
+                    "position": lesson.position,
+                    "created_at": lesson.created_at,
+                    "updated_at": lesson.updated_at,
+                }
+            }
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.patch("/api/personal/courses/{course_id}/lessons/{lesson_id}/progress")
+    async def patch_personal_course_lesson_progress(
+        course_id: int,
+        lesson_id: int,
+        payload: SetLessonProgressRequest,
+        authorization: Optional[str] = Header(default=None),
+    ) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            progress = await container.set_personal_course_lesson_progress.execute(
+                token=token,
+                course_id=course_id,
+                lesson_id=lesson_id,
+                completed=payload.completed,
+            )
+            return {
+                "progress": {
+                    "lesson_id": progress.lesson_id,
+                    "is_completed": progress.is_completed,
+                    "completed_at": progress.completed_at,
+                    "updated_at": progress.updated_at,
+                }
+            }
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.patch("/api/personal/courses/{course_id}/lessons/{lesson_id}")
+    async def patch_personal_course_lesson(
+        course_id: int,
+        lesson_id: int,
+        payload: UpdateCourseLessonRequest,
+        authorization: Optional[str] = Header(default=None),
+    ) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            lesson = await container.update_personal_course_lesson.execute(
+                token=token,
+                course_id=course_id,
+                lesson_id=lesson_id,
+                title=payload.title,
+                content=payload.content,
+                position=payload.position,
+            )
+            return {
+                "lesson": {
+                    "id": lesson.id,
+                    "course_id": lesson.course_id,
+                    "title": lesson.title,
+                    "content": lesson.content,
+                    "position": lesson.position,
+                    "created_at": lesson.created_at,
+                    "updated_at": lesson.updated_at,
+                }
+            }
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.delete("/api/personal/courses/{course_id}/lessons/{lesson_id}")
+    async def delete_personal_course_lesson(
+        course_id: int,
+        lesson_id: int,
+        authorization: Optional[str] = Header(default=None),
+    ) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            deleted = await container.delete_personal_course_lesson.execute(
+                token=token,
+                course_id=course_id,
+                lesson_id=lesson_id,
+            )
+            return {"deleted": bool(deleted)}
         except HTTPException:
             raise
         except Exception as exc:  # noqa: BLE001
@@ -411,6 +990,125 @@ def build_router(container: Container) -> APIRouter:
             token = _extract_bearer_token(authorization)
             user = await container.update_current_user.execute(token=token, nickname=payload.nickname)
             return {"user": user}
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.get("/api/personal/author-role-request")
+    async def get_personal_author_role_request(authorization: Optional[str] = Header(default=None)) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            request_item = await container.get_personal_author_role_request.execute(token=token)
+            if request_item is None:
+                return {"request": None}
+            return {
+                "request": {
+                    "id": request_item.id,
+                    "user_id": request_item.user_id,
+                    "message": request_item.message,
+                    "status": request_item.status,
+                    "admin_message": request_item.admin_message,
+                    "created_at": request_item.created_at,
+                    "updated_at": request_item.updated_at,
+                }
+            }
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.post("/api/personal/author-role-request")
+    async def create_personal_author_role_request(
+        payload: CreateAuthorRoleRequestPayload,
+        authorization: Optional[str] = Header(default=None),
+    ) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            request_item = await container.create_personal_author_role_request.execute(
+                token=token,
+                message=payload.message,
+            )
+            return {
+                "request": {
+                    "id": request_item.id,
+                    "user_id": request_item.user_id,
+                    "message": request_item.message,
+                    "status": request_item.status,
+                    "admin_message": request_item.admin_message,
+                    "created_at": request_item.created_at,
+                    "updated_at": request_item.updated_at,
+                }
+            }
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.get("/api/admin/author-role-requests")
+    async def list_admin_author_role_requests(
+        authorization: Optional[str] = Header(default=None),
+        status: Optional[str] = Query(default="pending"),
+        limit: int = Query(default=100, ge=1, le=500),
+        offset: int = Query(default=0, ge=0),
+    ) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            items = await container.list_admin_author_role_requests.execute(
+                token=token,
+                status=status,
+                limit=limit,
+                offset=offset,
+            )
+            return {
+                "count": len(items),
+                "items": [
+                    {
+                        "id": item.id,
+                        "user_id": item.user_id,
+                        "user_email": item.user_email,
+                        "user_nickname": item.user_nickname,
+                        "message": item.message,
+                        "status": item.status,
+                        "admin_message": item.admin_message,
+                        "created_at": item.created_at,
+                        "updated_at": item.updated_at,
+                    }
+                    for item in items
+                ],
+            }
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.patch("/api/admin/author-role-requests/{request_id}")
+    async def patch_admin_author_role_request(
+        request_id: int,
+        payload: UpdateAdminAuthorRoleRequestPayload,
+        authorization: Optional[str] = Header(default=None),
+    ) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            item = await container.update_admin_author_role_request.execute(
+                token=token,
+                request_id=request_id,
+                status=payload.status,
+                admin_message=payload.admin_message,
+            )
+            return {
+                "request": {
+                    "id": item.id,
+                    "user_id": item.user_id,
+                    "user_email": item.user_email,
+                    "user_nickname": item.user_nickname,
+                    "message": item.message,
+                    "status": item.status,
+                    "admin_message": item.admin_message,
+                    "created_at": item.created_at,
+                    "updated_at": item.updated_at,
+                }
+            }
         except HTTPException:
             raise
         except Exception as exc:  # noqa: BLE001

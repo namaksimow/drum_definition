@@ -13,6 +13,10 @@ class AuthenticationError(BackendError):
     """Authentication failed."""
 
 
+class ForbiddenError(BackendError):
+    """Access is denied for current user role."""
+
+
 class NotFoundError(BackendError):
     """Entity or file was not found."""
 

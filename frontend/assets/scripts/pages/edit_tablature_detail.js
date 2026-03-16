@@ -1,6 +1,6 @@
 import * as api from "../services/api.js?v=9";
+import { initTopAuthWidget } from "../services/top_auth_widget.js?v=8";
 
-const AUTH_TOKEN_KEY = "drum_auth_token";
 const INSTRUMENTS = ["hihat", "snare", "kick"];
 const INSTRUMENT_SYMBOLS = { hihat: "x", snare: "o", kick: "o" };
 
@@ -10,13 +10,28 @@ const subtitleEl = document.getElementById("subtitle");
 const statusEl = document.getElementById("status");
 const nameInput = document.getElementById("nameInput");
 const visibilitySelect = document.getElementById("visibilitySelect");
+const tabHint = document.getElementById("tabHint");
 const tabEditor = document.getElementById("tabEditor");
 const saveBtn = document.getElementById("saveBtn");
 
 let authToken = "";
 let tablatureId = null;
 let currentTabData = null;
-let isReadOnlyView = false;
+let isPatternReadOnly = false;
+let isMetadataOnlyMode = false;
+
+function ensureCoursesMenuButton() {
+  const menu = document.querySelector(".menu");
+  if (!menu) return;
+  const existing = menu.querySelector('a.menu__btn[href="/courses"]');
+  if (existing) return;
+
+  const link = document.createElement("a");
+  link.className = "menu__btn";
+  link.href = "/courses";
+  link.textContent = "Курсы";
+  menu.appendChild(link);
+}
 
 function getQueryParam(name) {
   const params = new URLSearchParams(window.location.search || "");
@@ -141,7 +156,7 @@ function renderTabEditor(tabData) {
     return;
   }
 
-  tabEditor.classList.toggle("tab-editor--readonly", isReadOnlyView);
+  tabEditor.classList.toggle("tab-editor--readonly", isPatternReadOnly);
   tabEditor.innerHTML = tabData.lines
     .map((line, lineIndex) => {
       const bars = Array.isArray(line.bars) ? line.bars : [];
@@ -220,16 +235,18 @@ if (saveBtn) {
     }
     const name = nameInput ? nameInput.value.trim() : "";
     const visibility = visibilitySelect ? visibilitySelect.value : "private";
-    const jsonFormat = currentTabData || { lines: [] };
+    const payload = {
+      trackFileName: name,
+      visibility,
+    };
+    if (!isMetadataOnlyMode) {
+      payload.jsonFormat = currentTabData || { lines: [] };
+    }
 
     try {
       saveBtn.disabled = true;
-      const payload = await api.updatePersonalTablature(authToken, tablatureId, {
-        trackFileName: name,
-        visibility,
-        jsonFormat,
-      });
-      renderTablature(payload.tablature || null);
+      const response = await api.updatePersonalTablature(authToken, tablatureId, payload);
+      renderTablature(response.tablature || null);
       setStatus("Изменения сохранены.");
     } catch (error) {
       const message = getErrorMessage(error);
@@ -246,7 +263,7 @@ if (saveBtn) {
 
 if (tabEditor) {
   tabEditor.addEventListener("click", (event) => {
-    if (isReadOnlyView) return;
+    if (isPatternReadOnly) return;
     const target = event.target;
     if (!(target instanceof HTMLElement)) return;
     const button = target.closest("[data-line-index][data-bar-index][data-instrument][data-slot]");
@@ -265,9 +282,10 @@ if (tabEditor) {
 }
 
 async function init() {
-  authToken = localStorage.getItem(AUTH_TOKEN_KEY) || "";
+  ensureCoursesMenuButton();
   tablatureId = getTablatureIdFromPath();
-  isReadOnlyView = String(getQueryParam("mode") || "").toLowerCase() === "view";
+  isMetadataOnlyMode = String(getQueryParam("mode") || "").toLowerCase() === "view";
+  isPatternReadOnly = isMetadataOnlyMode;
   const fromPersonal = String(getQueryParam("from") || "").toLowerCase() === "personal";
 
   if (backLinkEl) {
@@ -280,27 +298,28 @@ async function init() {
     }
   }
 
-  if (isReadOnlyView) {
-    if (nameInput) nameInput.disabled = true;
-    if (visibilitySelect) visibilitySelect.disabled = true;
-    if (saveBtn) saveBtn.classList.add("is-hidden");
+  if (isMetadataOnlyMode) {
+    if (tabHint) {
+      tabHint.textContent = "В этом режиме доступен только просмотр табулатуры. Можно менять только название и видимость.";
+    }
+  } else if (tabHint) {
+    tabHint.innerHTML = "Клик по символу включает/выключает удар: <code>x/o</code> ↔ <code>-</code>.";
   }
 
-  if (!authToken) {
-    setStatus("Нужна авторизация. Войди на главной странице.");
-    return;
-  }
-  if (!tablatureId) {
-    setStatus("Некорректный id табулатуры.");
-    return;
-  }
-  try {
-    await api.fetchAuthMe(authToken);
-  } catch (error) {
-    setStatus(`Токен недействителен: ${getErrorMessage(error)}`);
-    return;
-  }
-  await loadTablature();
+  await initTopAuthWidget({
+    onAuthChanged: async ({ token, user }) => {
+      authToken = token || "";
+      if (!user || !authToken) {
+        setStatus("Нужна авторизация. Войди на главной странице.");
+        return;
+      }
+      if (!tablatureId) {
+        setStatus("Некорректный id табулатуры.");
+        return;
+      }
+      await loadTablature();
+    },
+  });
 }
 
 init();

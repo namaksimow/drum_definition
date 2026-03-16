@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Статистика Курса</title>
+  <link rel="stylesheet" href="/assets/styles/base.css" />
+  <link rel="stylesheet" href="/assets/styles/components.css?v=5" />
+  <link rel="stylesheet" href="/assets/styles/pages/course_stats.css?v=1" />
+</head>
+<body>
+  <main class="course-stats-shell">
+    <aside class="menu">
+      <p class="menu__kicker">Drum Platform</p>
+      <h1 class="menu__title">Навигация</h1>
+      <a class="menu__btn" href="/#community">Библиотека сообщества</a>
+      <a class="menu__btn" href="/#personal">Личная библиотека</a>
+      <a class="menu__btn" href="/create">Создание табулатуры</a>
+      <a class="menu__btn" href="/edit">Редактирование табулатуры</a>
+      <a class="menu__btn menu__btn--active" href="/courses">Курсы</a>
+    </aside>
+
+    <section class="course-stats-page">
+      <header class="course-stats-page__header">
+        <div class="course-stats-page__intro">
+          <p class="course-stats-page__kicker">Courses</p>
+          <h1 class="course-stats-page__title" id="courseTitle">Статистика курса</h1>
+          <p class="course-stats-page__subtitle" id="courseSubtitle">Загрузка...</p>
+        </div>
+
+        <div class="top-auth" id="topAuth">
+          <button class="btn btn--secondary top-auth__trigger" id="authEntryBtn" type="button">Вход</button>
+          <section class="top-auth__panel" id="authPanel">
+            <article class="top-auth__card">
+              <h3 class="top-auth__title">Вход</h3>
+              <label class="field-label" for="loginEmail">Email</label>
+              <input class="field-input" id="loginEmail" type="email" placeholder="you@example.com" />
+              <label class="field-label" for="loginPassword">Пароль</label>
+              <input class="field-input" id="loginPassword" type="password" placeholder="Твой пароль" />
+              <button class="btn btn--secondary" id="loginBtn" type="button">Войти</button>
+            </article>
+
+            <article class="top-auth__card">
+              <h3 class="top-auth__title">Регистрация</h3>
+              <label class="field-label" for="registerEmail">Email</label>
+              <input class="field-input" id="registerEmail" type="email" placeholder="you@example.com" />
+              <label class="field-label" for="registerNickname">Nickname</label>
+              <input class="field-input" id="registerNickname" type="text" placeholder="drummer_nick" />
+              <label class="field-label" for="registerPassword">Пароль</label>
+              <input class="field-input" id="registerPassword" type="password" placeholder="Минимум 6 символов" />
+              <button class="btn btn--primary" id="registerBtn" type="button">Зарегистрироваться</button>
+            </article>
+
+            <p class="top-auth__status" id="authPanelStatus"></p>
+          </section>
+        </div>
+      </header>
+
+      <section class="panel">
+        <h2 class="panel__title">Первый вход в курс</h2>
+        <p class="panel__hint" id="firstVisitorInfo">Загрузка...</p>
+        <div class="stats-list" id="visitorsList"></div>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel__title">Пройденные уроки</h2>
+        <div class="stats-list" id="completionsList"></div>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel__title">Статус</h2>
+        <pre class="status" id="status">Готово к работе.</pre>
+      </section>
+    </section>
+  </main>
+
+  <script type="module" src="/assets/scripts/pages/course_stats.js?v=1"></script>
+</body>
+</html>

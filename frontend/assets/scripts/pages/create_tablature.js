@@ -1,4 +1,5 @@
 import * as api from "../services/api.js?v=9";
+import { initTopAuthWidget } from "../services/top_auth_widget.js?v=8";
 
 const AUTH_TOKEN_KEY = "drum_auth_token";
 const statusEl = document.getElementById("status");
@@ -20,6 +21,19 @@ let jobId = "";
 let authToken = "";
 let currentProgress = 0;
 let progressTimer = null;
+
+function ensureCoursesMenuButton() {
+  const menu = document.querySelector(".menu");
+  if (!menu) return;
+  const existing = menu.querySelector('a.menu__btn[href="/courses"]');
+  if (existing) return;
+
+  const link = document.createElement("a");
+  link.className = "menu__btn";
+  link.href = "/courses";
+  link.textContent = "Курсы";
+  menu.appendChild(link);
+}
 
 async function waitForPersonalRowByJobId(targetJobId, maxAttempts = 12, delayMs = 2500) {
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
@@ -311,16 +325,24 @@ if (jsonBtn) {
   });
 }
 
-function init() {
-  authToken = localStorage.getItem(AUTH_TOKEN_KEY) || "";
-  if (saveBtn) {
-    saveBtn.disabled = !authToken;
-  }
-  setStatus(
-    authToken
-      ? "Авторизованный режим: можно сохранить в личную библиотеку."
-      : "Гостевой режим. Создание доступно, сохранение в библиотеку отключено."
-  );
+async function init() {
+  ensureCoursesMenuButton();
+  await initTopAuthWidget({
+    onAuthChanged: async ({ token, user }) => {
+      authToken = token || "";
+      if (!authToken) {
+        localStorage.removeItem(AUTH_TOKEN_KEY);
+      }
+      if (saveBtn) {
+        saveBtn.disabled = !authToken;
+      }
+      setStatus(
+        user
+          ? "Авторизованный режим: можно сохранить в личную библиотеку."
+          : "Гостевой режим. Создание доступно, сохранение в библиотеку отключено."
+      );
+    },
+  });
 }
 
 init();

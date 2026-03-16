@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Авторизация | Drum Tablature</title>
+  <link rel="stylesheet" href="/assets/styles/base.css" />
+  <link rel="stylesheet" href="/assets/styles/components.css?v=5" />
+  <link rel="stylesheet" href="/assets/styles/pages/auth.css?v=1" />
+</head>
+<body>
+  <main class="auth-layout">
+    <section class="auth-window" aria-labelledby="authTitle">
+      <p class="auth-window__kicker">Drum Platform</p>
+      <h1 class="auth-window__title" id="authTitle">Авторизация</h1>
+      <p class="auth-window__subtitle">Вход и регистрация через email и пароль.</p>
+
+      <div class="auth-window__tabs" role="tablist" aria-label="Выбор режима">
+        <button class="auth-window__tab auth-window__tab--active" id="loginTabBtn" type="button" role="tab">
+          Вход
+        </button>
+        <button class="auth-window__tab" id="registerTabBtn" type="button" role="tab">
+          Регистрация
+        </button>
+      </div>
+
+      <section class="auth-window__section" id="loginSection">
+        <label class="field-label" for="loginEmail">Email</label>
+        <input class="field-input" id="loginEmail" type="email" placeholder="you@example.com" />
+        <label class="field-label" for="loginPassword">Пароль</label>
+        <input class="field-input" id="loginPassword" type="password" placeholder="Твой пароль" />
+        <button class="btn btn--primary auth-window__submit" id="loginBtn" type="button">Войти</button>
+      </section>
+
+      <section class="auth-window__section is-hidden" id="registerSection">
+        <label class="field-label" for="registerEmail">Email</label>
+        <input class="field-input" id="registerEmail" type="email" placeholder="you@example.com" />
+        <label class="field-label" for="registerNickname">Nickname</label>
+        <input class="field-input" id="registerNickname" type="text" placeholder="drummer_nick" />
+        <label class="field-label" for="registerPassword">Пароль</label>
+        <input class="field-input" id="registerPassword" type="password" placeholder="Минимум 6 символов" />
+        <button class="btn btn--primary auth-window__submit" id="registerBtn" type="button">Зарегистрироваться</button>
+      </section>
+
+      <p class="auth-window__status" id="authStatus">Готово к входу.</p>
+      <button class="btn btn--secondary auth-window__guest-btn" id="guestModeBtn" type="button">
+        Продолжить работу как незарегистрированный пользователь
+      </button>
+    </section>
+  </main>
+
+  <div class="overlay is-hidden" id="guestConfirmOverlay">
+    <section class="confirm-card" role="dialog" aria-modal="true" aria-labelledby="guestConfirmTitle">
+      <h2 class="confirm-card__title" id="guestConfirmTitle">Гостевой режим</h2>
+      <p class="confirm-card__text">
+        Ряд возможностей для вас будет ограничен.
+      </p>
+      <div class="confirm-card__actions">
+        <button class="btn btn--primary" id="guestConfirmBtn" type="button">Продолжить</button>
+        <button class="btn btn--secondary" id="guestCancelBtn" type="button">Отменить</button>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="/assets/scripts/pages/auth.js?v=1"></script>
+</body>
+</html>

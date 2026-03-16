@@ -50,3 +50,63 @@
   font-size: 14px;
   background: var(--surface-2);
 }
+
+.top-auth {
+  position: relative;
+}
+
+.top-auth__trigger {
+  width: 220px;
+  min-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.top-auth__panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(380px, 92vw);
+  z-index: 20;
+  display: none;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.12);
+}
+
+.top-auth__panel--open {
+  display: grid;
+}
+
+.top-auth__card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-2);
+  padding: 10px;
+}
+
+.top-auth__title {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.top-auth__status {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.top-auth__actions {
+  display: grid;
+  gap: 8px;
+}
+
+.top-auth__actions .btn {
+  width: 100%;
+}

@@ -7,6 +7,7 @@ from backend_app.domain.errors import (
     ConflictError,
     DataIntegrityError,
     ExternalServiceError,
+    ForbiddenError,
     NotFoundError,
     ValidationError,
 )
@@ -17,6 +18,8 @@ def to_http_exception(exc: Exception) -> HTTPException:
         return HTTPException(status_code=400, detail=str(exc))
     if isinstance(exc, AuthenticationError):
         return HTTPException(status_code=401, detail=str(exc))
+    if isinstance(exc, ForbiddenError):
+        return HTTPException(status_code=403, detail=str(exc))
     if isinstance(exc, NotFoundError):
         return HTTPException(status_code=404, detail=str(exc))
     if isinstance(exc, ConflictError):

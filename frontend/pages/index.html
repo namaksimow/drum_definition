@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Drum Tablature</title>
   <link rel="stylesheet" href="/assets/styles/base.css" />
-  <link rel="stylesheet" href="/assets/styles/components.css" />
-  <link rel="stylesheet" href="/assets/styles/pages/index.css?v=2" />
+  <link rel="stylesheet" href="/assets/styles/components.css?v=5" />
+  <link rel="stylesheet" href="/assets/styles/pages/index.css?v=8" />
 </head>
 <body>
   <main class="app">
@@ -22,39 +22,18 @@
       <div class="menu__links">
         <a class="menu__linkbtn" href="/create">Создание табулатуры</a>
         <a class="menu__linkbtn" href="/edit">Редактирование табулатуры</a>
+        <a class="menu__linkbtn" href="/courses">Курсы</a>
       </div>
     </aside>
 
     <section class="workspace">
       <header class="workspace-top">
         <section class="auth-guest" id="authGuest">
-          <button class="btn btn--secondary" id="guestAuthToggleBtn" type="button">Вход</button>
-
-          <section class="auth-guest__panel" id="guestAuthPanel">
-            <article class="auth-card">
-              <h3 class="auth-card__title">Вход</h3>
-              <label class="field-label" for="loginEmail">Email</label>
-              <input class="field-input" id="loginEmail" type="email" placeholder="you@example.com" />
-              <label class="field-label" for="loginPassword">Пароль</label>
-              <input class="field-input" id="loginPassword" type="password" placeholder="Твой пароль" />
-              <button class="btn btn--secondary" id="loginBtn" type="button">Войти</button>
-            </article>
-
-            <article class="auth-card">
-              <h3 class="auth-card__title">Регистрация</h3>
-              <label class="field-label" for="registerEmail">Email</label>
-              <input class="field-input" id="registerEmail" type="email" placeholder="you@example.com" />
-              <label class="field-label" for="registerNickname">Nickname</label>
-              <input class="field-input" id="registerNickname" type="text" placeholder="drummer_nick" />
-              <label class="field-label" for="registerPassword">Пароль</label>
-              <input class="field-input" id="registerPassword" type="password" placeholder="Минимум 6 символов" />
-              <button class="btn btn--primary" id="registerBtn" type="button">Зарегистрироваться</button>
-            </article>
-          </section>
+          <button class="btn btn--secondary top-auth__trigger" id="guestAuthToggleBtn" type="button">Вход</button>
         </section>
 
         <div class="auth-user" id="authUser">
-          <button class="btn btn--secondary auth-user__toggle" id="accountMenuBtn" type="button">
+          <button class="btn btn--secondary auth-user__toggle top-auth__trigger" id="accountMenuBtn" type="button">
             <span id="authState">Аккаунт</span>
           </button>
           <div class="auth-user__menu" id="accountMenu">
@@ -116,6 +95,6 @@
     </section>
   </main>
 
-  <script type="module" src="/assets/scripts/pages/index.js?v=12"></script>
+  <script type="module" src="/assets/scripts/pages/index.js?v=15"></script>
 </body>
 </html>

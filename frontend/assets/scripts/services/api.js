@@ -63,6 +63,74 @@ export async function fetchCommunityTablatures(query = "") {
   return payload;
 }
 
+export async function fetchCourses(query = "", options = {}) {
+  const limit = Number.isFinite(options.limit) ? Number(options.limit) : 50;
+  const offset = Number.isFinite(options.offset) ? Number(options.offset) : 0;
+  const params = new URLSearchParams();
+  params.set("limit", String(limit));
+  params.set("offset", String(offset));
+  if (query.trim()) {
+    params.set("q", query.trim());
+  }
+  const response = await fetch(`/api/courses?${params.toString()}`);
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
+export async function fetchPublicCourseLessons(courseId) {
+  const response = await fetch(`/api/community/courses/${encodeURIComponent(courseId)}/lessons`);
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
+export async function createCourse(
+  token,
+  { title, description = "", visibility = "public", tags = [], coverImagePath = "" }
+) {
+  const response = await fetch("/api/courses", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      title,
+      description,
+      visibility,
+      tags,
+      cover_image_path: coverImagePath,
+    }),
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
+export async function uploadCourseCover(token, file) {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await fetch("/api/courses/cover", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
 export async function fetchCommunityTablatureById(tablatureId) {
   const response = await fetch(`/api/community/tablatures/${encodeURIComponent(tablatureId)}`);
   const payload = await response.json();
@@ -190,6 +258,74 @@ export async function updateAuthMe(token, { nickname }) {
   return payload;
 }
 
+export async function fetchPersonalAuthorRoleRequest(token) {
+  const response = await fetch("/api/personal/author-role-request", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
+export async function createPersonalAuthorRoleRequest(token, message) {
+  const response = await fetch("/api/personal/author-role-request", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ message }),
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
+export async function fetchAdminAuthorRoleRequests(token, { status = "pending", limit = 100, offset = 0 } = {}) {
+  const params = new URLSearchParams();
+  params.set("limit", String(limit));
+  params.set("offset", String(offset));
+  if (status && status.trim()) {
+    params.set("status", status.trim());
+  }
+  const response = await fetch(`/api/admin/author-role-requests?${params.toString()}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
+export async function updateAdminAuthorRoleRequest(token, requestId, status, adminMessage = "") {
+  const body = { status };
+  if (typeof adminMessage === "string" && adminMessage.trim()) {
+    body.admin_message = adminMessage.trim();
+  }
+  const response = await fetch(`/api/admin/author-role-requests/${encodeURIComponent(requestId)}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(body),
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
 export async function fetchPersonalTablatures(token, query = "", options = {}) {
   const limit = Number.isFinite(options.limit) ? Number(options.limit) : 50;
   const offset = Number.isFinite(options.offset) ? Number(options.offset) : 0;
@@ -202,6 +338,218 @@ export async function fetchPersonalTablatures(token, query = "", options = {}) {
   const response = await fetch(`/api/personal/tablatures?${params.toString()}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
+export async function fetchPersonalCourses(token, query = "", options = {}) {
+  const limit = Number.isFinite(options.limit) ? Number(options.limit) : 50;
+  const offset = Number.isFinite(options.offset) ? Number(options.offset) : 0;
+  const params = new URLSearchParams();
+  params.set("limit", String(limit));
+  params.set("offset", String(offset));
+  if (query.trim()) {
+    params.set("q", query.trim());
+  }
+  const response = await fetch(`/api/personal/courses?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
+export async function updatePersonalCourse(
+  token,
+  courseId,
+  { title = undefined, description = undefined, visibility = undefined, tags = undefined, coverImagePath = undefined } = {}
+) {
+  const body = {};
+  if (typeof title !== "undefined") {
+    body.title = title;
+  }
+  if (typeof description !== "undefined") {
+    body.description = description;
+  }
+  if (typeof visibility !== "undefined") {
+    body.visibility = visibility;
+  }
+  if (typeof tags !== "undefined") {
+    body.tags = tags;
+  }
+  if (typeof coverImagePath !== "undefined") {
+    body.cover_image_path = coverImagePath;
+  }
+  const response = await fetch(`/api/personal/courses/${encodeURIComponent(courseId)}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(body),
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
+export async function deletePersonalCourse(token, courseId) {
+  const response = await fetch(`/api/personal/courses/${encodeURIComponent(courseId)}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
+export async function fetchPersonalCourseLessons(token, courseId) {
+  const response = await fetch(`/api/personal/courses/${encodeURIComponent(courseId)}/lessons`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
+export async function fetchPersonalCourseLessonProgress(token, courseId) {
+  const response = await fetch(`/api/personal/courses/${encodeURIComponent(courseId)}/lessons/progress`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
+export async function setPersonalCourseLessonProgress(token, courseId, lessonId, completed) {
+  const response = await fetch(
+    `/api/personal/courses/${encodeURIComponent(courseId)}/lessons/${encodeURIComponent(lessonId)}/progress`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ completed: Boolean(completed) }),
+    }
+  );
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
+export async function trackPersonalCourseVisit(token, courseId) {
+  const response = await fetch(`/api/personal/courses/${encodeURIComponent(courseId)}/visit`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
+export async function fetchPersonalCourseStats(token, courseId) {
+  const response = await fetch(`/api/personal/courses/${encodeURIComponent(courseId)}/stats`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
+export async function createPersonalCourseLesson(
+  token,
+  courseId,
+  { title, content = "", position = undefined } = {}
+) {
+  const body = { title, content };
+  if (typeof position !== "undefined") {
+    body.position = position;
+  }
+  const response = await fetch(`/api/personal/courses/${encodeURIComponent(courseId)}/lessons`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(body),
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
+export async function updatePersonalCourseLesson(
+  token,
+  courseId,
+  lessonId,
+  { title = undefined, content = undefined, position = undefined } = {}
+) {
+  const body = {};
+  if (typeof title !== "undefined") {
+    body.title = title;
+  }
+  if (typeof content !== "undefined") {
+    body.content = content;
+  }
+  if (typeof position !== "undefined") {
+    body.position = position;
+  }
+  const response = await fetch(
+    `/api/personal/courses/${encodeURIComponent(courseId)}/lessons/${encodeURIComponent(lessonId)}`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+    }
+  );
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
+export async function deletePersonalCourseLesson(token, courseId, lessonId) {
+  const response = await fetch(
+    `/api/personal/courses/${encodeURIComponent(courseId)}/lessons/${encodeURIComponent(lessonId)}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
   const payload = await response.json();
   if (!response.ok) {
     throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));

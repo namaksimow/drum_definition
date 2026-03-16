@@ -5,58 +5,92 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Создание Табулатуры</title>
   <link rel="stylesheet" href="/assets/styles/base.css" />
-  <link rel="stylesheet" href="/assets/styles/components.css" />
-  <link rel="stylesheet" href="/assets/styles/pages/create_tablature.css" />
+  <link rel="stylesheet" href="/assets/styles/components.css?v=5" />
+  <link rel="stylesheet" href="/assets/styles/pages/create_tablature.css?v=8" />
 </head>
 <body>
-  <main class="create-page">
-    <header class="create-page__header">
-      <div>
-        <p class="create-page__kicker">Create</p>
-        <h1 class="create-page__title">Создание табулатуры</h1>
-        <p class="create-page__subtitle">Доступно всем. Принимается только MP3.</p>
-      </div>
-      <nav class="create-page__nav">
-        <a href="/">Главная</a>
-        <a href="/edit">Редактирование</a>
-        <a href="/account">Аккаунт</a>
-      </nav>
-    </header>
+  <main class="create-shell">
+    <aside class="menu">
+      <p class="menu__kicker">Drum Platform</p>
+      <h1 class="menu__title">Навигация</h1>
+      <a class="menu__btn" href="/#community">Библиотека сообщества</a>
+      <a class="menu__btn" href="/#personal">Личная библиотека</a>
+      <a class="menu__btn menu__btn--active" href="/create">Создание табулатуры</a>
+      <a class="menu__btn" href="/edit">Редактирование табулатуры</a>
+      <a class="menu__btn" href="/courses">Курсы</a>
+    </aside>
 
-    <section class="panel">
-      <h2 class="panel__title">Новый файл</h2>
-      <label class="field-label" for="fileInput">Файл MP3</label>
-      <input class="field-input" id="fileInput" type="file" accept=".mp3,audio/mpeg" />
+    <section class="create-page">
+      <header class="create-page__header">
+        <div class="create-page__intro">
+          <p class="create-page__kicker">Create</p>
+          <h1 class="create-page__title">Создание табулатуры</h1>
+          <p class="create-page__subtitle">Доступно всем. Принимается только MP3.</p>
+        </div>
 
-      <label class="field-label" for="titleInput">Название табулатуры</label>
-      <input class="field-input" id="titleInput" type="text" placeholder="Например: My Groove 120bpm" />
+        <div class="top-auth" id="topAuth">
+          <button class="btn btn--secondary top-auth__trigger" id="authEntryBtn" type="button">Вход</button>
+          <section class="top-auth__panel" id="authPanel">
+            <article class="top-auth__card">
+              <h3 class="top-auth__title">Вход</h3>
+              <label class="field-label" for="loginEmail">Email</label>
+              <input class="field-input" id="loginEmail" type="email" placeholder="you@example.com" />
+              <label class="field-label" for="loginPassword">Пароль</label>
+              <input class="field-input" id="loginPassword" type="password" placeholder="Твой пароль" />
+              <button class="btn btn--secondary" id="loginBtn" type="button">Войти</button>
+            </article>
 
-      <label class="field-label" for="visibilitySelect">Видимость (при сохранении в библиотеку)</label>
-      <select class="field-input" id="visibilitySelect">
-        <option value="private">private</option>
-        <option value="public">public</option>
-      </select>
+            <article class="top-auth__card">
+              <h3 class="top-auth__title">Регистрация</h3>
+              <label class="field-label" for="registerEmail">Email</label>
+              <input class="field-input" id="registerEmail" type="email" placeholder="you@example.com" />
+              <label class="field-label" for="registerNickname">Nickname</label>
+              <input class="field-input" id="registerNickname" type="text" placeholder="drummer_nick" />
+              <label class="field-label" for="registerPassword">Пароль</label>
+              <input class="field-input" id="registerPassword" type="password" placeholder="Минимум 6 символов" />
+              <button class="btn btn--primary" id="registerBtn" type="button">Зарегистрироваться</button>
+            </article>
 
-      <div class="panel__actions">
-        <button class="btn btn--primary" id="createBtn" type="button">Создать табулатуру</button>
-        <button class="btn btn--secondary" id="saveBtn" type="button">Сохранить в личную библиотеку</button>
-      </div>
-      <p class="panel__text">Сохранение в личную библиотеку доступно после входа в аккаунт.</p>
-    </section>
+            <p class="top-auth__status" id="authPanelStatus"></p>
+          </section>
+        </div>
+      </header>
 
-    <section class="panel">
-      <h2 class="panel__title">Результат</h2>
-      <p class="panel__text">Текущий `job_id`: <strong id="jobIdText">-</strong></p>
-      <div class="panel__actions">
-        <button class="btn btn--secondary" id="pdfBtn" type="button">Скачать PDF</button>
-        <button class="btn btn--secondary" id="jsonBtn" type="button">Показать JSON</button>
-      </div>
-      <pre class="panel__json" id="jsonView">JSON пока не загружен.</pre>
-    </section>
+      <section class="panel">
+        <h2 class="panel__title">Новый файл</h2>
+        <label class="field-label" for="fileInput">Файл MP3</label>
+        <input class="field-input" id="fileInput" type="file" accept=".mp3,audio/mpeg" />
 
-    <section class="panel">
-      <h2 class="panel__title">Статус</h2>
-      <pre class="panel__status" id="status">Готово к работе.</pre>
+        <label class="field-label" for="titleInput">Название табулатуры</label>
+        <input class="field-input" id="titleInput" type="text" placeholder="Например: My Groove 120bpm" />
+
+        <label class="field-label" for="visibilitySelect">Видимость (при сохранении в библиотеку)</label>
+        <select class="field-input" id="visibilitySelect">
+          <option value="private">private</option>
+          <option value="public">public</option>
+        </select>
+
+        <div class="panel__actions">
+          <button class="btn btn--primary" id="createBtn" type="button">Создать табулатуру</button>
+          <button class="btn btn--secondary" id="saveBtn" type="button">Сохранить в личную библиотеку</button>
+        </div>
+        <p class="panel__text">Сохранение в личную библиотеку доступно после входа в аккаунт.</p>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel__title">Результат</h2>
+        <p class="panel__text">Текущий `job_id`: <strong id="jobIdText">-</strong></p>
+        <div class="panel__actions">
+          <button class="btn btn--secondary" id="pdfBtn" type="button">Скачать PDF</button>
+          <button class="btn btn--secondary" id="jsonBtn" type="button">Показать JSON</button>
+        </div>
+        <pre class="panel__json" id="jsonView">JSON пока не загружен.</pre>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel__title">Статус</h2>
+        <pre class="panel__status" id="status">Готово к работе.</pre>
+      </section>
     </section>
   </main>
 
@@ -72,6 +106,6 @@
     </div>
   </section>
 
-  <script type="module" src="/assets/scripts/pages/create_tablature.js?v=3"></script>
+  <script type="module" src="/assets/scripts/pages/create_tablature.js?v=7"></script>
 </body>
 </html>

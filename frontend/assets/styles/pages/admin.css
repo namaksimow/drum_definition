@@ -1,0 +1,169 @@
+.admin-page {
+  max-width: 1220px;
+  margin: 0 auto;
+  display: grid;
+  gap: 14px;
+}
+
+.admin-page__header {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 112px;
+}
+
+.admin-page__intro {
+  min-width: 0;
+}
+
+.admin-page__kicker {
+  margin: 0;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-page__title {
+  margin: 6px 0;
+  font-size: 30px;
+}
+
+.admin-page__subtitle {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.panel__title {
+  margin: 0 0 10px;
+  font-size: 20px;
+}
+
+.panel__tools {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.panel__select {
+  width: 220px;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-2);
+  padding: 12px;
+  cursor: pointer;
+}
+
+.card--selected {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary) inset;
+}
+
+.card__title {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.card__meta {
+  margin: 0 0 8px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.card__text {
+  margin: 0 0 10px;
+  color: var(--text-main);
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+
+.card__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.status {
+  margin: 0;
+  min-height: 48px;
+  white-space: pre-wrap;
+}
+
+.is-hidden {
+  display: none !important;
+}
+
+.request-detail {
+  display: grid;
+  gap: 10px;
+}
+
+.request-detail__meta {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.request-detail__subtitle {
+  margin: 4px 0 0;
+  font-size: 16px;
+}
+
+.request-detail__message {
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  padding: 10px;
+  min-height: 84px;
+  white-space: pre-wrap;
+  font-size: 14px;
+}
+
+.request-detail__textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+@media (max-width: 980px) {
+  .admin-page {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 760px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-page__header {
+    flex-direction: column;
+  }
+
+  .admin-page__title {
+    font-size: 24px;
+  }
+}

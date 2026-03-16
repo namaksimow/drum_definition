@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Админ Панель</title>
+  <link rel="stylesheet" href="/assets/styles/base.css" />
+  <link rel="stylesheet" href="/assets/styles/components.css?v=5" />
+  <link rel="stylesheet" href="/assets/styles/pages/admin.css?v=3" />
+</head>
+<body>
+  <main class="admin-page">
+    <header class="admin-page__header">
+      <div class="admin-page__intro">
+        <p class="admin-page__kicker">Admin Console</p>
+        <h1 class="admin-page__title">Заявки на роль автора</h1>
+        <p class="admin-page__subtitle" id="subtitle">Загрузка...</p>
+      </div>
+
+      <div class="top-auth" id="topAuth">
+        <button class="btn btn--secondary top-auth__trigger" id="authEntryBtn" type="button">Вход</button>
+        <section class="top-auth__panel" id="authPanel">
+          <article class="top-auth__card">
+            <h3 class="top-auth__title">Вход</h3>
+            <label class="field-label" for="loginEmail">Email</label>
+            <input class="field-input" id="loginEmail" type="email" placeholder="you@example.com" />
+            <label class="field-label" for="loginPassword">Пароль</label>
+            <input class="field-input" id="loginPassword" type="password" placeholder="Твой пароль" />
+            <button class="btn btn--secondary" id="loginBtn" type="button">Войти</button>
+          </article>
+
+          <article class="top-auth__card">
+            <h3 class="top-auth__title">Регистрация</h3>
+            <label class="field-label" for="registerEmail">Email</label>
+            <input class="field-input" id="registerEmail" type="email" placeholder="you@example.com" />
+            <label class="field-label" for="registerNickname">Nickname</label>
+            <input class="field-input" id="registerNickname" type="text" placeholder="drummer_nick" />
+            <label class="field-label" for="registerPassword">Пароль</label>
+            <input class="field-input" id="registerPassword" type="password" placeholder="Минимум 6 символов" />
+            <button class="btn btn--primary" id="registerBtn" type="button">Зарегистрироваться</button>
+          </article>
+
+          <p class="top-auth__status" id="authPanelStatus"></p>
+        </section>
+      </div>
+    </header>
+
+    <section class="panel">
+      <h2 class="panel__title">Фильтр</h2>
+      <div class="panel__tools">
+        <label class="field-label" for="statusFilter">Показывать</label>
+        <select class="field-input panel__select" id="statusFilter">
+          <option value="pending" selected>Только открытые заявки</option>
+        </select>
+        <button class="btn btn--primary" id="refreshBtn" type="button">Обновить</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel__title">Список заявок</h2>
+      <div class="cards" id="requestsList">
+        <article class="card">
+          <h3 class="card__title">Загрузка...</h3>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel is-hidden" id="requestDetailPanel">
+      <h2 class="panel__title">Детали заявки</h2>
+      <div class="request-detail" id="requestDetailContent">
+        <p class="request-detail__meta" id="requestDetailMeta">-</p>
+        <h3 class="request-detail__subtitle">Текст заявки</h3>
+        <pre class="request-detail__message" id="requestDetailMessage">-</pre>
+        <button class="btn btn--primary" id="approveRequestBtn" type="button">Одобрить становление автором</button>
+
+        <h3 class="request-detail__subtitle">Причина отказа</h3>
+        <label class="field-label" for="rejectMessageInput">Сообщение для пользователя</label>
+        <textarea class="field-input request-detail__textarea" id="rejectMessageInput" placeholder="Например: нужно приложить портфолио или ссылки на работы"></textarea>
+        <button class="btn btn--secondary" id="rejectRequestBtn" type="button">Отклонить заявку</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel__title">Статус</h2>
+      <pre class="status" id="status">Готово к работе.</pre>
+    </section>
+  </main>
+
+  <script type="module" src="/assets/scripts/pages/admin.js?v=7"></script>
+</body>
+</html>

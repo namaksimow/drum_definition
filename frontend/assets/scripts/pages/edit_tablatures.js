@@ -1,6 +1,5 @@
 import * as api from "../services/api.js?v=9";
-
-const AUTH_TOKEN_KEY = "drum_auth_token";
+import { initTopAuthWidget } from "../services/top_auth_widget.js?v=8";
 
 const authGuard = document.getElementById("authGuard");
 const editorContent = document.getElementById("editorContent");
@@ -11,6 +10,19 @@ const searchBtn = document.getElementById("searchBtn");
 const resetBtn = document.getElementById("resetBtn");
 
 let authToken = "";
+
+function ensureCoursesMenuButton() {
+  const menu = document.querySelector(".menu");
+  if (!menu) return;
+  const existing = menu.querySelector('a.menu__btn[href="/courses"]');
+  if (existing) return;
+
+  const link = document.createElement("a");
+  link.className = "menu__btn";
+  link.href = "/courses";
+  link.textContent = "Курсы";
+  menu.appendChild(link);
+}
 
 function setStatus(message) {
   if (statusEl) statusEl.textContent = message;
@@ -110,24 +122,21 @@ if (listEl) {
 }
 
 async function init() {
-  authToken = localStorage.getItem(AUTH_TOKEN_KEY) || "";
-  if (!authToken) {
-    if (authGuard) authGuard.classList.remove("is-hidden");
-    if (editorContent) editorContent.classList.add("is-hidden");
-    setStatus("Нужна авторизация.");
-    return;
-  }
-
-  try {
-    await api.fetchAuthMe(authToken);
-    if (authGuard) authGuard.classList.add("is-hidden");
-    if (editorContent) editorContent.classList.remove("is-hidden");
-    await loadList();
-  } catch (error) {
-    if (authGuard) authGuard.classList.remove("is-hidden");
-    if (editorContent) editorContent.classList.add("is-hidden");
-    setStatus(`Токен недействителен: ${error && error.message ? error.message : String(error)}`);
-  }
+  ensureCoursesMenuButton();
+  await initTopAuthWidget({
+    onAuthChanged: async ({ token, user }) => {
+      authToken = token || "";
+      if (!user || !authToken) {
+        if (authGuard) authGuard.classList.remove("is-hidden");
+        if (editorContent) editorContent.classList.add("is-hidden");
+        setStatus("Нужна авторизация.");
+        return;
+      }
+      if (authGuard) authGuard.classList.add("is-hidden");
+      if (editorContent) editorContent.classList.remove("is-hidden");
+      await loadList();
+    },
+  });
 }
 
 init();

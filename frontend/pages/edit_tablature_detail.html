@@ -5,43 +5,84 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Редактирование Табулатуры</title>
   <link rel="stylesheet" href="/assets/styles/base.css" />
-  <link rel="stylesheet" href="/assets/styles/components.css" />
-  <link rel="stylesheet" href="/assets/styles/pages/edit_tablature_detail.css" />
+  <link rel="stylesheet" href="/assets/styles/components.css?v=5" />
+  <link rel="stylesheet" href="/assets/styles/pages/edit_tablature_detail.css?v=4" />
 </head>
 <body>
-  <main class="detail-page">
-    <header class="detail-page__header">
-      <a class="detail-page__back" id="backLink" href="/edit">← К списку табулатур</a>
-      <h1 class="detail-page__title" id="pageTitle">Просмотр табулатуры</h1>
-      <p class="detail-page__subtitle" id="subtitle">Загрузка...</p>
-    </header>
+  <main class="detail-shell">
+    <aside class="menu">
+      <p class="menu__kicker">Drum Platform</p>
+      <h1 class="menu__title">Навигация</h1>
+      <a class="menu__btn" href="/#community">Библиотека сообщества</a>
+      <a class="menu__btn" href="/#personal">Личная библиотека</a>
+      <a class="menu__btn" href="/create">Создание табулатуры</a>
+      <a class="menu__btn menu__btn--active" href="/edit">Редактирование табулатуры</a>
+      <a class="menu__btn" href="/courses">Курсы</a>
+    </aside>
 
-    <section class="panel">
-      <h2 class="panel__title">Основные параметры</h2>
-      <label class="field-label" for="nameInput">Название</label>
-      <input class="field-input" id="nameInput" type="text" placeholder="Название табулатуры" />
-      <label class="field-label" for="visibilitySelect">Видимость</label>
-      <select class="field-input" id="visibilitySelect">
-        <option value="private">private</option>
-        <option value="public">public</option>
-      </select>
-    </section>
+    <section class="detail-page">
+      <header class="page-topbar">
+        <div class="top-auth" id="topAuth">
+          <button class="btn btn--secondary top-auth__trigger" id="authEntryBtn" type="button">Вход</button>
+          <section class="top-auth__panel" id="authPanel">
+            <article class="top-auth__card">
+              <h3 class="top-auth__title">Вход</h3>
+              <label class="field-label" for="loginEmail">Email</label>
+              <input class="field-input" id="loginEmail" type="email" placeholder="you@example.com" />
+              <label class="field-label" for="loginPassword">Пароль</label>
+              <input class="field-input" id="loginPassword" type="password" placeholder="Твой пароль" />
+              <button class="btn btn--secondary" id="loginBtn" type="button">Войти</button>
+            </article>
 
-    <section class="panel">
-      <h2 class="panel__title">Табулатура</h2>
-      <p class="panel__hint">Клик по символу включает/выключает удар: <code>x/o</code> ↔ <code>-</code>.</p>
-      <div class="tab-editor" id="tabEditor">Загрузка...</div>
-      <div class="panel__actions">
-        <button class="btn btn--primary" id="saveBtn" type="button">Сохранить изменения</button>
-      </div>
-    </section>
+            <article class="top-auth__card">
+              <h3 class="top-auth__title">Регистрация</h3>
+              <label class="field-label" for="registerEmail">Email</label>
+              <input class="field-input" id="registerEmail" type="email" placeholder="you@example.com" />
+              <label class="field-label" for="registerNickname">Nickname</label>
+              <input class="field-input" id="registerNickname" type="text" placeholder="drummer_nick" />
+              <label class="field-label" for="registerPassword">Пароль</label>
+              <input class="field-input" id="registerPassword" type="password" placeholder="Минимум 6 символов" />
+              <button class="btn btn--primary" id="registerBtn" type="button">Зарегистрироваться</button>
+            </article>
 
-    <section class="panel">
-      <h2 class="panel__title">Статус</h2>
-      <pre class="status" id="status">Готово к работе.</pre>
+            <p class="top-auth__status" id="authPanelStatus"></p>
+          </section>
+        </div>
+      </header>
+
+      <header class="detail-page__header">
+        <a class="detail-page__back" id="backLink" href="/edit">← К списку табулатур</a>
+        <h1 class="detail-page__title" id="pageTitle">Просмотр табулатуры</h1>
+        <p class="detail-page__subtitle" id="subtitle">Загрузка...</p>
+      </header>
+
+      <section class="panel">
+        <h2 class="panel__title">Основные параметры</h2>
+        <label class="field-label" for="nameInput">Название</label>
+        <input class="field-input" id="nameInput" type="text" placeholder="Название табулатуры" />
+        <label class="field-label" for="visibilitySelect">Видимость</label>
+        <select class="field-input" id="visibilitySelect">
+          <option value="private">private</option>
+          <option value="public">public</option>
+        </select>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel__title">Табулатура</h2>
+        <p class="panel__hint" id="tabHint">Клик по символу включает/выключает удар: <code>x/o</code> ↔ <code>-</code>.</p>
+        <div class="tab-editor" id="tabEditor">Загрузка...</div>
+        <div class="panel__actions">
+          <button class="btn btn--primary" id="saveBtn" type="button">Сохранить изменения</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel__title">Статус</h2>
+        <pre class="status" id="status">Готово к работе.</pre>
+      </section>
     </section>
   </main>
 
-  <script type="module" src="/assets/scripts/pages/edit_tablature_detail.js?v=4"></script>
+  <script type="module" src="/assets/scripts/pages/edit_tablature_detail.js?v=8"></script>
 </body>
 </html>
