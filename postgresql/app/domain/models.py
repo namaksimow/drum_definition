@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import Optional
+from typing import List, Optional
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Integer, JSON, Text, UniqueConstraint, func
+from sqlalchemy import ARRAY, Boolean, CheckConstraint, DateTime, ForeignKey, Index, Integer, JSON, Text, UniqueConstraint, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -53,6 +53,26 @@ class User(Base):
     )
 
 
+class AuthorRoleRequest(Base):
+    __tablename__ = "author_role_requests"
+    __table_args__ = (
+        Index("idx_author_role_requests_user_id", "user_id"),
+        Index("idx_author_role_requests_status", "status"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("users.id", onupdate="CASCADE", ondelete="CASCADE"),
+        nullable=False,
+    )
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(Text, nullable=False, server_default="pending")
+    admin_message: Mapped[Optional[str]] = mapped_column(Text)
+    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
 class Track(Base):
     __tablename__ = "tracks"
     __table_args__ = (
@@ -91,8 +111,54 @@ class Course(Base):
     )
     title: Mapped[str] = mapped_column(Text, nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text)
+    tags: Mapped[List[str]] = mapped_column(ARRAY(Text), nullable=False, server_default="{}")
     cover_image_path: Mapped[Optional[str]] = mapped_column(Text)
     created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class CourseLesson(Base):
+    __tablename__ = "course_lessons"
+    __table_args__ = (
+        CheckConstraint("position >= 1", name="ck_course_lessons_position_positive"),
+        Index("idx_course_lessons_course_id", "course_id"),
+        Index("idx_course_lessons_position", "course_id", "position", "id"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    course_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("course.id", onupdate="CASCADE", ondelete="CASCADE"),
+        nullable=False,
+    )
+    title: Mapped[str] = mapped_column(Text, nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False, server_default="")
+    position: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
+    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class UserLessonProgress(Base):
+    __tablename__ = "user_lesson_progress"
+    __table_args__ = (
+        UniqueConstraint("user_id", "lesson_id", name="uq_user_lesson_progress_user_lesson"),
+        Index("idx_user_lesson_progress_user_id", "user_id"),
+        Index("idx_user_lesson_progress_lesson_id", "lesson_id"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("users.id", onupdate="CASCADE", ondelete="CASCADE"),
+        nullable=False,
+    )
+    lesson_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("course_lessons.id", onupdate="CASCADE", ondelete="CASCADE"),
+        nullable=False,
+    )
+    is_completed: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    completed_at: Mapped[Optional[DateTime]] = mapped_column(DateTime(timezone=True))
     updated_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 

@@ -13,6 +13,101 @@ class DatabaseGateway(Protocol):
     async def list_public_tablatures(self, *, query: str | None, limit: int, offset: int) -> list[dict]:
         ...
 
+    async def list_public_courses(self, *, query: str | None, limit: int, offset: int) -> list[dict]:
+        ...
+
+    async def create_course(
+        self,
+        *,
+        user_id: int,
+        title: str,
+        description: str | None = None,
+        visibility: str | None = None,
+        tags: list[str] | None = None,
+        cover_image_path: str | None = None,
+    ) -> dict:
+        ...
+
+    async def list_user_courses(self, *, user_id: int, query: str | None, limit: int, offset: int) -> list[dict]:
+        ...
+
+    async def update_user_course(
+        self,
+        *,
+        user_id: int,
+        course_id: int,
+        title: str | None = None,
+        description: str | None = None,
+        visibility: str | None = None,
+        tags: list[str] | None = None,
+        cover_image_path: str | None = None,
+    ) -> dict | None:
+        ...
+
+    async def delete_user_course(self, *, user_id: int, course_id: int) -> bool:
+        ...
+
+    async def list_public_course_lessons(self, *, course_id: int) -> list[dict] | None:
+        ...
+
+    async def list_user_course_lessons(self, *, user_id: int, course_id: int) -> list[dict] | None:
+        ...
+
+    async def create_user_course_lesson(
+        self,
+        *,
+        user_id: int,
+        course_id: int,
+        title: str,
+        content: str | None = None,
+        position: int | None = None,
+    ) -> dict | None:
+        ...
+
+    async def update_user_course_lesson(
+        self,
+        *,
+        user_id: int,
+        course_id: int,
+        lesson_id: int,
+        title: str | None = None,
+        content: str | None = None,
+        position: int | None = None,
+    ) -> dict | None:
+        ...
+
+    async def delete_user_course_lesson(self, *, user_id: int, course_id: int, lesson_id: int) -> bool:
+        ...
+
+    async def list_user_course_lesson_progress(self, *, user_id: int, course_id: int) -> list[dict] | None:
+        ...
+
+    async def set_user_course_lesson_progress(
+        self,
+        *,
+        user_id: int,
+        course_id: int,
+        lesson_id: int,
+        completed: bool,
+    ) -> dict | None:
+        ...
+
+    async def track_user_course_visit(
+        self,
+        *,
+        user_id: int,
+        course_id: int,
+    ) -> dict | None:
+        ...
+
+    async def get_author_course_statistics(
+        self,
+        *,
+        author_user_id: int,
+        course_id: int,
+    ) -> dict | None:
+        ...
+
     async def get_public_tablature(self, *, tablature_id: int) -> dict | None:
         ...
 
@@ -85,4 +180,28 @@ class DatabaseGateway(Protocol):
         password_hash: str,
         role_title: str,
     ) -> dict:
+        ...
+
+    async def get_latest_author_role_request(self, *, user_id: int) -> dict | None:
+        ...
+
+    async def create_author_role_request(self, *, user_id: int, message: str) -> dict:
+        ...
+
+    async def list_author_role_requests(
+        self,
+        *,
+        status: str | None,
+        limit: int,
+        offset: int,
+    ) -> list[dict]:
+        ...
+
+    async def update_author_role_request_status(
+        self,
+        *,
+        request_id: int,
+        status: str,
+        admin_message: str | None = None,
+    ) -> dict | None:
         ...

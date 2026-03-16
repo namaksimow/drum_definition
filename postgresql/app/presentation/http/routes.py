@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, Header, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -26,6 +26,15 @@ class UpdateMeRequest(BaseModel):
     nickname: str = Field(min_length=1, max_length=64)
 
 
+class CreateAuthorRoleRequestPayload(BaseModel):
+    message: str = Field(min_length=1, max_length=5000)
+
+
+class UpdateAuthorRoleRequestStatusPayload(BaseModel):
+    status: str = Field(min_length=1, max_length=32)
+    admin_message: Optional[str] = Field(default=None, max_length=5000)
+
+
 class UpdateMyTablatureRequest(BaseModel):
     track_file_name: Optional[str] = Field(default=None, max_length=255)
     visibility: Optional[str] = Field(default=None, max_length=64)
@@ -38,6 +47,38 @@ class CreateTablatureCommentRequest(BaseModel):
 
 class SetTablatureReactionRequest(BaseModel):
     reaction_type: str = Field(min_length=1, max_length=32)
+
+
+class CreateCourseRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=255)
+    description: Optional[str] = Field(default=None, max_length=5000)
+    visibility: Optional[str] = Field(default="public", max_length=64)
+    tags: List[str] = Field(default_factory=list)
+    cover_image_path: Optional[str] = Field(default=None, max_length=1000)
+
+
+class UpdateMyCourseRequest(BaseModel):
+    title: Optional[str] = Field(default=None, max_length=255)
+    description: Optional[str] = Field(default=None, max_length=5000)
+    visibility: Optional[str] = Field(default=None, max_length=64)
+    tags: Optional[List[str]] = None
+    cover_image_path: Optional[str] = Field(default=None, max_length=1000)
+
+
+class CreateCourseLessonRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=255)
+    content: Optional[str] = Field(default="", max_length=20000)
+    position: Optional[int] = Field(default=None, ge=1)
+
+
+class UpdateCourseLessonRequest(BaseModel):
+    title: Optional[str] = Field(default=None, max_length=255)
+    content: Optional[str] = Field(default=None, max_length=20000)
+    position: Optional[int] = Field(default=None, ge=1)
+
+
+class SetLessonProgressRequest(BaseModel):
+    completed: bool
 
 
 def _extract_bearer_token(authorization: Optional[str]) -> str:
@@ -79,6 +120,323 @@ async def list_public_tablatures(
     container = get_container()
     items = await container.list_public_tablatures.execute(query=q, limit=limit, offset=offset)
     return {"count": len(items), "items": items}
+
+
+@router.get("/community/courses")
+async def list_public_courses(
+    q: Optional[str] = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+) -> dict:
+    container = get_container()
+    items = await container.list_public_courses.execute(query=q, limit=limit, offset=offset)
+    return {"count": len(items), "items": items}
+
+
+@router.get("/community/courses/{course_id}/lessons")
+async def list_public_course_lessons(course_id: int) -> dict:
+    container = get_container()
+    items = await container.list_public_course_lessons.execute(course_id=course_id)
+    if items is None:
+        raise HTTPException(status_code=404, detail="Public course not found")
+    return {"count": len(items), "items": items}
+
+
+@router.post("/me/courses")
+async def create_course(
+    payload: CreateCourseRequest,
+    authorization: Optional[str] = Header(default=None),
+) -> dict:
+    token = _extract_bearer_token(authorization)
+    container = get_container()
+    try:
+        user = await container.get_current_user.execute(token=token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    if str(user.get("role") or "").strip().lower() != "author":
+        raise HTTPException(status_code=403, detail="Only author can create courses")
+
+    try:
+        course = await container.create_course.execute(
+            user_id=int(user["id"]),
+            title=payload.title,
+            description=payload.description,
+            visibility=payload.visibility,
+            tags=payload.tags,
+            cover_image_path=payload.cover_image_path,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"course": course}
+
+
+@router.get("/me/courses")
+async def list_my_courses(
+    authorization: Optional[str] = Header(default=None),
+    q: Optional[str] = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+) -> dict:
+    token = _extract_bearer_token(authorization)
+    container = get_container()
+    try:
+        user = await container.get_current_user.execute(token=token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    items = await container.list_user_courses.execute(
+        user_id=int(user["id"]),
+        query=q,
+        limit=limit,
+        offset=offset,
+    )
+    return {"count": len(items), "items": items}
+
+
+@router.patch("/me/courses/{course_id}")
+async def patch_my_course(
+    course_id: int,
+    payload: UpdateMyCourseRequest,
+    authorization: Optional[str] = Header(default=None),
+) -> dict:
+    token = _extract_bearer_token(authorization)
+    container = get_container()
+    try:
+        user = await container.get_current_user.execute(token=token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    try:
+        updated = await container.update_user_course.execute(
+            user_id=int(user["id"]),
+            course_id=course_id,
+            title=payload.title,
+            description=payload.description,
+            visibility=payload.visibility,
+            tags=payload.tags,
+            cover_image_path=payload.cover_image_path,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    if updated is None:
+        raise HTTPException(status_code=404, detail="Course not found")
+    return {"course": updated}
+
+
+@router.delete("/me/courses/{course_id}")
+async def delete_my_course(
+    course_id: int,
+    authorization: Optional[str] = Header(default=None),
+) -> dict:
+    token = _extract_bearer_token(authorization)
+    container = get_container()
+    try:
+        user = await container.get_current_user.execute(token=token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    deleted = await container.delete_user_course.execute(
+        user_id=int(user["id"]),
+        course_id=course_id,
+    )
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Course not found")
+    return {"deleted": True}
+
+
+@router.get("/me/courses/{course_id}/lessons")
+async def list_my_course_lessons(
+    course_id: int,
+    authorization: Optional[str] = Header(default=None),
+) -> dict:
+    token = _extract_bearer_token(authorization)
+    container = get_container()
+    try:
+        user = await container.get_current_user.execute(token=token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    items = await container.list_user_course_lessons.execute(
+        user_id=int(user["id"]),
+        course_id=course_id,
+    )
+    if items is None:
+        raise HTTPException(status_code=404, detail="Course not found")
+    return {"count": len(items), "items": items}
+
+
+@router.get("/me/courses/{course_id}/lessons/progress")
+async def list_my_course_lesson_progress(
+    course_id: int,
+    authorization: Optional[str] = Header(default=None),
+) -> dict:
+    token = _extract_bearer_token(authorization)
+    container = get_container()
+    try:
+        user = await container.get_current_user.execute(token=token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    items = await container.list_user_course_lesson_progress.execute(
+        user_id=int(user["id"]),
+        course_id=course_id,
+    )
+    if items is None:
+        raise HTTPException(status_code=404, detail="Course not found")
+    return {"count": len(items), "items": items}
+
+
+@router.post("/me/courses/{course_id}/visit")
+async def track_my_course_visit(
+    course_id: int,
+    authorization: Optional[str] = Header(default=None),
+) -> dict:
+    token = _extract_bearer_token(authorization)
+    container = get_container()
+    try:
+        user = await container.get_current_user.execute(token=token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    visit = await container.track_user_course_visit.execute(
+        user_id=int(user["id"]),
+        course_id=course_id,
+    )
+    if visit is None:
+        raise HTTPException(status_code=404, detail="Course not found")
+    return {"visit": visit}
+
+
+@router.get("/me/courses/{course_id}/stats")
+async def get_my_course_statistics(
+    course_id: int,
+    authorization: Optional[str] = Header(default=None),
+) -> dict:
+    token = _extract_bearer_token(authorization)
+    container = get_container()
+    try:
+        user = await container.get_current_user.execute(token=token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    if str(user.get("role") or "").strip().lower() != "author":
+        raise HTTPException(status_code=403, detail="Only author can view course statistics")
+
+    stats = await container.get_author_course_statistics.execute(
+        author_user_id=int(user["id"]),
+        course_id=course_id,
+    )
+    if stats is None:
+        raise HTTPException(status_code=404, detail="Course not found")
+    return {"stats": stats}
+
+
+@router.post("/me/courses/{course_id}/lessons")
+async def create_my_course_lesson(
+    course_id: int,
+    payload: CreateCourseLessonRequest,
+    authorization: Optional[str] = Header(default=None),
+) -> dict:
+    token = _extract_bearer_token(authorization)
+    container = get_container()
+    try:
+        user = await container.get_current_user.execute(token=token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    try:
+        lesson = await container.create_user_course_lesson.execute(
+            user_id=int(user["id"]),
+            course_id=course_id,
+            title=payload.title,
+            content=payload.content,
+            position=payload.position,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    if lesson is None:
+        raise HTTPException(status_code=404, detail="Course not found")
+    return {"lesson": lesson}
+
+
+@router.patch("/me/courses/{course_id}/lessons/{lesson_id}/progress")
+async def patch_my_course_lesson_progress(
+    course_id: int,
+    lesson_id: int,
+    payload: SetLessonProgressRequest,
+    authorization: Optional[str] = Header(default=None),
+) -> dict:
+    token = _extract_bearer_token(authorization)
+    container = get_container()
+    try:
+        user = await container.get_current_user.execute(token=token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    progress = await container.set_user_course_lesson_progress.execute(
+        user_id=int(user["id"]),
+        course_id=course_id,
+        lesson_id=lesson_id,
+        completed=payload.completed,
+    )
+    if progress is None:
+        raise HTTPException(status_code=404, detail="Course or lesson not found")
+    return {"progress": progress}
+
+
+@router.patch("/me/courses/{course_id}/lessons/{lesson_id}")
+async def patch_my_course_lesson(
+    course_id: int,
+    lesson_id: int,
+    payload: UpdateCourseLessonRequest,
+    authorization: Optional[str] = Header(default=None),
+) -> dict:
+    token = _extract_bearer_token(authorization)
+    container = get_container()
+    try:
+        user = await container.get_current_user.execute(token=token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    try:
+        lesson = await container.update_user_course_lesson.execute(
+            user_id=int(user["id"]),
+            course_id=course_id,
+            lesson_id=lesson_id,
+            title=payload.title,
+            content=payload.content,
+            position=payload.position,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    if lesson is None:
+        raise HTTPException(status_code=404, detail="Course or lesson not found")
+    return {"lesson": lesson}
+
+
+@router.delete("/me/courses/{course_id}/lessons/{lesson_id}")
+async def delete_my_course_lesson(
+    course_id: int,
+    lesson_id: int,
+    authorization: Optional[str] = Header(default=None),
+) -> dict:
+    token = _extract_bearer_token(authorization)
+    container = get_container()
+    try:
+        user = await container.get_current_user.execute(token=token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    deleted = await container.delete_user_course_lesson.execute(
+        user_id=int(user["id"]),
+        course_id=course_id,
+        lesson_id=lesson_id,
+    )
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Course or lesson not found")
+    return {"deleted": True}
 
 
 @router.get("/community/tablatures/{tablature_id}")
@@ -237,6 +595,104 @@ async def patch_auth_me(payload: UpdateMeRequest, authorization: Optional[str] =
         status_code = 401 if "token" in message.lower() else 400
         raise HTTPException(status_code=status_code, detail=message) from exc
     return {"user": user}
+
+
+@router.get("/me/author-role-request")
+async def get_my_author_role_request(
+    authorization: Optional[str] = Header(default=None),
+) -> dict:
+    token = _extract_bearer_token(authorization)
+    container = get_container()
+    try:
+        user = await container.get_current_user.execute(token=token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    request_item = await container.get_latest_author_role_request.execute(
+        user_id=int(user["id"]),
+    )
+    return {"request": request_item}
+
+
+@router.post("/me/author-role-request")
+async def create_my_author_role_request(
+    payload: CreateAuthorRoleRequestPayload,
+    authorization: Optional[str] = Header(default=None),
+) -> dict:
+    token = _extract_bearer_token(authorization)
+    container = get_container()
+    try:
+        user = await container.get_current_user.execute(token=token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    try:
+        request_item = await container.create_author_role_request.execute(
+            user_id=int(user["id"]),
+            message=payload.message,
+        )
+    except ValueError as exc:
+        message = str(exc)
+        if "already has author role" in message.lower():
+            raise HTTPException(status_code=409, detail=message) from exc
+        if "already exists" in message.lower():
+            raise HTTPException(status_code=409, detail=message) from exc
+        raise HTTPException(status_code=400, detail=message) from exc
+    return {"request": request_item}
+
+
+@router.get("/admin/author-role-requests")
+async def list_admin_author_role_requests(
+    authorization: Optional[str] = Header(default=None),
+    status: Optional[str] = Query(default="pending"),
+    limit: int = Query(default=100, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+) -> dict:
+    token = _extract_bearer_token(authorization)
+    container = get_container()
+    try:
+        user = await container.get_current_user.execute(token=token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    if str(user.get("role") or "").strip().lower() != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can view author role requests")
+
+    items = await container.list_author_role_requests.execute(
+        status=status,
+        limit=limit,
+        offset=offset,
+    )
+    return {"count": len(items), "items": items}
+
+
+@router.patch("/admin/author-role-requests/{request_id}")
+async def patch_admin_author_role_request(
+    request_id: int,
+    payload: UpdateAuthorRoleRequestStatusPayload,
+    authorization: Optional[str] = Header(default=None),
+) -> dict:
+    token = _extract_bearer_token(authorization)
+    container = get_container()
+    try:
+        user = await container.get_current_user.execute(token=token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    if str(user.get("role") or "").strip().lower() != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can update author role requests")
+
+    try:
+        item = await container.update_author_role_request_status.execute(
+            request_id=request_id,
+            status=payload.status,
+            admin_message=payload.admin_message,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    if item is None:
+        raise HTTPException(status_code=404, detail="Author role request not found")
+    return {"request": item}
 
 
 @router.get("/me/tablatures")
