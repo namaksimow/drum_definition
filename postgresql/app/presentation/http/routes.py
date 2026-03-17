@@ -81,6 +81,16 @@ class SetLessonProgressRequest(BaseModel):
     completed: bool
 
 
+class UpdateVisibilityRequest(BaseModel):
+    visibility: str = Field(min_length=1, max_length=64)
+
+
+class UpdateAdminUserAccountRequest(BaseModel):
+    email: Optional[str] = Field(default=None, max_length=320)
+    nickname: Optional[str] = Field(default=None, max_length=64)
+    role: Optional[str] = Field(default=None, max_length=32)
+
+
 def _extract_bearer_token(authorization: Optional[str]) -> str:
     if authorization is None:
         raise HTTPException(status_code=401, detail="Authorization header is required")
@@ -639,6 +649,350 @@ async def create_my_author_role_request(
             raise HTTPException(status_code=409, detail=message) from exc
         raise HTTPException(status_code=400, detail=message) from exc
     return {"request": request_item}
+
+
+@router.get("/admin/tablatures")
+async def list_admin_tablatures(
+    authorization: Optional[str] = Header(default=None),
+    q: Optional[str] = Query(default=None),
+    limit: int = Query(default=200, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+) -> dict:
+    token = _extract_bearer_token(authorization)
+    container = get_container()
+    try:
+        user = await container.get_current_user.execute(token=token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    if str(user.get("role") or "").strip().lower() != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can view tablatures")
+
+    items = await container.list_admin_tablatures.execute(
+        query=q,
+        limit=limit,
+        offset=offset,
+    )
+    return {"count": len(items), "items": items}
+
+
+@router.get("/admin/tablatures/{tablature_id}")
+async def get_admin_tablature(
+    tablature_id: int,
+    authorization: Optional[str] = Header(default=None),
+) -> dict:
+    token = _extract_bearer_token(authorization)
+    container = get_container()
+    try:
+        user = await container.get_current_user.execute(token=token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    if str(user.get("role") or "").strip().lower() != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can view tablatures")
+
+    item = await container.get_admin_tablature.execute(tablature_id=tablature_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Tablature not found")
+    return {"tablature": item}
+
+
+@router.patch("/admin/tablatures/{tablature_id}/visibility")
+async def patch_admin_tablature_visibility(
+    tablature_id: int,
+    payload: UpdateVisibilityRequest,
+    authorization: Optional[str] = Header(default=None),
+) -> dict:
+    token = _extract_bearer_token(authorization)
+    container = get_container()
+    try:
+        user = await container.get_current_user.execute(token=token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    if str(user.get("role") or "").strip().lower() != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can update tablatures")
+
+    try:
+        item = await container.update_admin_tablature_visibility.execute(
+            tablature_id=tablature_id,
+            visibility=payload.visibility,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    if item is None:
+        raise HTTPException(status_code=404, detail="Tablature not found")
+    return {"tablature": item}
+
+
+@router.delete("/admin/tablatures/{tablature_id}")
+async def delete_admin_tablature(
+    tablature_id: int,
+    authorization: Optional[str] = Header(default=None),
+) -> dict:
+    token = _extract_bearer_token(authorization)
+    container = get_container()
+    try:
+        user = await container.get_current_user.execute(token=token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    if str(user.get("role") or "").strip().lower() != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can delete tablatures")
+
+    deleted = await container.delete_admin_tablature.execute(tablature_id=tablature_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Tablature not found")
+    return {"deleted": True}
+
+
+@router.get("/admin/tablatures/{tablature_id}/comments")
+async def list_admin_tablature_comments(
+    tablature_id: int,
+    authorization: Optional[str] = Header(default=None),
+    limit: int = Query(default=100, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+) -> dict:
+    token = _extract_bearer_token(authorization)
+    container = get_container()
+    try:
+        user = await container.get_current_user.execute(token=token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    if str(user.get("role") or "").strip().lower() != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can view tablature comments")
+
+    items = await container.list_admin_tablature_comments.execute(
+        tablature_id=tablature_id,
+        limit=limit,
+        offset=offset,
+    )
+    if items is None:
+        raise HTTPException(status_code=404, detail="Tablature not found")
+    return {"count": len(items), "items": items}
+
+
+@router.delete("/admin/tablatures/{tablature_id}/comments/{comment_id}")
+async def delete_admin_tablature_comment(
+    tablature_id: int,
+    comment_id: int,
+    authorization: Optional[str] = Header(default=None),
+) -> dict:
+    token = _extract_bearer_token(authorization)
+    container = get_container()
+    try:
+        user = await container.get_current_user.execute(token=token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    if str(user.get("role") or "").strip().lower() != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can delete tablature comments")
+
+    deleted = await container.delete_admin_tablature_comment.execute(
+        tablature_id=tablature_id,
+        comment_id=comment_id,
+    )
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    return {"deleted": True}
+
+
+@router.get("/admin/courses")
+async def list_admin_courses(
+    authorization: Optional[str] = Header(default=None),
+    q: Optional[str] = Query(default=None),
+    limit: int = Query(default=200, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+) -> dict:
+    token = _extract_bearer_token(authorization)
+    container = get_container()
+    try:
+        user = await container.get_current_user.execute(token=token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    if str(user.get("role") or "").strip().lower() != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can view courses")
+
+    items = await container.list_admin_courses.execute(
+        query=q,
+        limit=limit,
+        offset=offset,
+    )
+    return {"count": len(items), "items": items}
+
+
+@router.get("/admin/courses/{course_id}")
+async def get_admin_course(
+    course_id: int,
+    authorization: Optional[str] = Header(default=None),
+) -> dict:
+    token = _extract_bearer_token(authorization)
+    container = get_container()
+    try:
+        user = await container.get_current_user.execute(token=token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    if str(user.get("role") or "").strip().lower() != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can view courses")
+
+    item = await container.get_admin_course.execute(course_id=course_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Course not found")
+    return {"course": item}
+
+
+@router.patch("/admin/courses/{course_id}/visibility")
+async def patch_admin_course_visibility(
+    course_id: int,
+    payload: UpdateVisibilityRequest,
+    authorization: Optional[str] = Header(default=None),
+) -> dict:
+    token = _extract_bearer_token(authorization)
+    container = get_container()
+    try:
+        user = await container.get_current_user.execute(token=token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    if str(user.get("role") or "").strip().lower() != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can update courses")
+
+    try:
+        item = await container.update_admin_course_visibility.execute(
+            course_id=course_id,
+            visibility=payload.visibility,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    if item is None:
+        raise HTTPException(status_code=404, detail="Course not found")
+    return {"course": item}
+
+
+@router.delete("/admin/courses/{course_id}")
+async def delete_admin_course(
+    course_id: int,
+    authorization: Optional[str] = Header(default=None),
+) -> dict:
+    token = _extract_bearer_token(authorization)
+    container = get_container()
+    try:
+        user = await container.get_current_user.execute(token=token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    if str(user.get("role") or "").strip().lower() != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can delete courses")
+
+    deleted = await container.delete_admin_course.execute(course_id=course_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Course not found")
+    return {"deleted": True}
+
+
+@router.get("/admin/courses/{course_id}/lessons")
+async def list_admin_course_lessons(
+    course_id: int,
+    authorization: Optional[str] = Header(default=None),
+) -> dict:
+    token = _extract_bearer_token(authorization)
+    container = get_container()
+    try:
+        user = await container.get_current_user.execute(token=token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    if str(user.get("role") or "").strip().lower() != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can view course lessons")
+
+    items = await container.list_admin_course_lessons.execute(course_id=course_id)
+    if items is None:
+        raise HTTPException(status_code=404, detail="Course not found")
+    return {"count": len(items), "items": items}
+
+
+@router.get("/admin/users")
+async def list_admin_users(
+    authorization: Optional[str] = Header(default=None),
+    role: Optional[str] = Query(default="all"),
+    q: Optional[str] = Query(default=None),
+    limit: int = Query(default=200, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+) -> dict:
+    token = _extract_bearer_token(authorization)
+    container = get_container()
+    try:
+        user = await container.get_current_user.execute(token=token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    if str(user.get("role") or "").strip().lower() != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can view users")
+
+    try:
+        items = await container.list_admin_users.execute(
+            role=role,
+            query=q,
+            limit=limit,
+            offset=offset,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"count": len(items), "items": items}
+
+
+@router.patch("/admin/users/{user_id}")
+async def patch_admin_user_account(
+    user_id: int,
+    payload: UpdateAdminUserAccountRequest,
+    authorization: Optional[str] = Header(default=None),
+) -> dict:
+    token = _extract_bearer_token(authorization)
+    container = get_container()
+    try:
+        user = await container.get_current_user.execute(token=token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    if str(user.get("role") or "").strip().lower() != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can update users")
+
+    try:
+        updated = await container.update_admin_user_account.execute(
+            user_id=user_id,
+            email=payload.email,
+            nickname=payload.nickname,
+            role=payload.role,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    if updated is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"user": updated}
+
+
+@router.delete("/admin/users/{user_id}")
+async def delete_admin_user(
+    user_id: int,
+    authorization: Optional[str] = Header(default=None),
+) -> dict:
+    token = _extract_bearer_token(authorization)
+    container = get_container()
+    try:
+        user = await container.get_current_user.execute(token=token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    if str(user.get("role") or "").strip().lower() != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can delete users")
+
+    deleted = await container.delete_admin_user.execute(user_id=user_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"deleted": True}
 
 
 @router.get("/admin/author-role-requests")

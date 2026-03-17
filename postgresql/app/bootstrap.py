@@ -7,11 +7,17 @@ from app.adapters.postgres.sqlalchemy_gateway import AsyncSqlAlchemyDatabaseGate
 from app.application.use_cases.check_db_health import CheckDbHealthUseCase
 from app.application.use_cases.add_public_tablature_comment import AddPublicTablatureCommentUseCase
 from app.application.use_cases.create_author_role_request import CreateAuthorRoleRequestUseCase
+from app.application.use_cases.delete_admin_course import DeleteAdminCourseUseCase
+from app.application.use_cases.delete_admin_tablature_comment import DeleteAdminTablatureCommentUseCase
+from app.application.use_cases.delete_admin_tablature import DeleteAdminTablatureUseCase
+from app.application.use_cases.delete_admin_user import DeleteAdminUserUseCase
 from app.application.use_cases.create_user_course_lesson import CreateUserCourseLessonUseCase
 from app.application.use_cases.create_course import CreateCourseUseCase
 from app.application.use_cases.delete_user_course_lesson import DeleteUserCourseLessonUseCase
 from app.application.use_cases.delete_user_course import DeleteUserCourseUseCase
 from app.application.use_cases.get_author_course_statistics import GetAuthorCourseStatisticsUseCase
+from app.application.use_cases.get_admin_course import GetAdminCourseUseCase
+from app.application.use_cases.get_admin_tablature import GetAdminTablatureUseCase
 from app.application.use_cases.get_current_user import GetCurrentUserUseCase
 from app.application.use_cases.get_latest_author_role_request import GetLatestAuthorRoleRequestUseCase
 from app.application.use_cases.get_public_tablature import GetPublicTablatureUseCase
@@ -22,6 +28,11 @@ from app.application.use_cases.list_public_course_lessons import ListPublicCours
 from app.application.use_cases.list_public_courses import ListPublicCoursesUseCase
 from app.application.use_cases.list_public_tablature_comments import ListPublicTablatureCommentsUseCase
 from app.application.use_cases.list_public_tablatures import ListPublicTablaturesUseCase
+from app.application.use_cases.list_admin_courses import ListAdminCoursesUseCase
+from app.application.use_cases.list_admin_course_lessons import ListAdminCourseLessonsUseCase
+from app.application.use_cases.list_admin_tablature_comments import ListAdminTablatureCommentsUseCase
+from app.application.use_cases.list_admin_tablatures import ListAdminTablaturesUseCase
+from app.application.use_cases.list_admin_users import ListAdminUsersUseCase
 from app.application.use_cases.list_author_role_requests import ListAuthorRoleRequestsUseCase
 from app.application.use_cases.list_user_course_lesson_progress import ListUserCourseLessonProgressUseCase
 from app.application.use_cases.list_user_course_lessons import ListUserCourseLessonsUseCase
@@ -34,6 +45,9 @@ from app.application.use_cases.set_public_tablature_reaction import SetPublicTab
 from app.application.use_cases.track_user_course_visit import TrackUserCourseVisitUseCase
 from app.application.use_cases.update_current_user_nickname import UpdateCurrentUserNicknameUseCase
 from app.application.use_cases.update_author_role_request_status import UpdateAuthorRoleRequestStatusUseCase
+from app.application.use_cases.update_admin_course_visibility import UpdateAdminCourseVisibilityUseCase
+from app.application.use_cases.update_admin_tablature_visibility import UpdateAdminTablatureVisibilityUseCase
+from app.application.use_cases.update_admin_user_account import UpdateAdminUserAccountUseCase
 from app.application.use_cases.update_user_course_lesson import UpdateUserCourseLessonUseCase
 from app.application.use_cases.update_user_course import UpdateUserCourseUseCase
 from app.application.use_cases.update_user_tablature import UpdateUserTablatureUseCase
@@ -62,6 +76,20 @@ class Container:
     delete_user_course: DeleteUserCourseUseCase
     get_latest_author_role_request: GetLatestAuthorRoleRequestUseCase
     create_author_role_request: CreateAuthorRoleRequestUseCase
+    list_admin_tablatures: ListAdminTablaturesUseCase
+    get_admin_tablature: GetAdminTablatureUseCase
+    update_admin_tablature_visibility: UpdateAdminTablatureVisibilityUseCase
+    delete_admin_tablature: DeleteAdminTablatureUseCase
+    list_admin_tablature_comments: ListAdminTablatureCommentsUseCase
+    delete_admin_tablature_comment: DeleteAdminTablatureCommentUseCase
+    list_admin_courses: ListAdminCoursesUseCase
+    get_admin_course: GetAdminCourseUseCase
+    update_admin_course_visibility: UpdateAdminCourseVisibilityUseCase
+    delete_admin_course: DeleteAdminCourseUseCase
+    list_admin_course_lessons: ListAdminCourseLessonsUseCase
+    list_admin_users: ListAdminUsersUseCase
+    update_admin_user_account: UpdateAdminUserAccountUseCase
+    delete_admin_user: DeleteAdminUserUseCase
     list_author_role_requests: ListAuthorRoleRequestsUseCase
     update_author_role_request_status: UpdateAuthorRoleRequestStatusUseCase
     get_public_tablature: GetPublicTablatureUseCase
@@ -105,6 +133,20 @@ def get_container() -> Container:
         delete_user_course=DeleteUserCourseUseCase(gateway),
         get_latest_author_role_request=GetLatestAuthorRoleRequestUseCase(gateway),
         create_author_role_request=CreateAuthorRoleRequestUseCase(gateway),
+        list_admin_tablatures=ListAdminTablaturesUseCase(gateway),
+        get_admin_tablature=GetAdminTablatureUseCase(gateway),
+        update_admin_tablature_visibility=UpdateAdminTablatureVisibilityUseCase(gateway),
+        delete_admin_tablature=DeleteAdminTablatureUseCase(gateway),
+        list_admin_tablature_comments=ListAdminTablatureCommentsUseCase(gateway),
+        delete_admin_tablature_comment=DeleteAdminTablatureCommentUseCase(gateway),
+        list_admin_courses=ListAdminCoursesUseCase(gateway),
+        get_admin_course=GetAdminCourseUseCase(gateway),
+        update_admin_course_visibility=UpdateAdminCourseVisibilityUseCase(gateway),
+        delete_admin_course=DeleteAdminCourseUseCase(gateway),
+        list_admin_course_lessons=ListAdminCourseLessonsUseCase(gateway),
+        list_admin_users=ListAdminUsersUseCase(gateway),
+        update_admin_user_account=UpdateAdminUserAccountUseCase(gateway),
+        delete_admin_user=DeleteAdminUserUseCase(gateway),
         list_author_role_requests=ListAuthorRoleRequestsUseCase(gateway),
         update_author_role_request_status=UpdateAuthorRoleRequestStatusUseCase(gateway),
         get_public_tablature=GetPublicTablatureUseCase(gateway),

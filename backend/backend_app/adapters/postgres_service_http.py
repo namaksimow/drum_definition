@@ -569,6 +569,341 @@ class PostgresServiceHttpAdapter(PostgresServicePort):
             payload = resp.text
         return resp.status_code, payload
 
+    async def list_admin_tablatures(
+        self,
+        *,
+        token: str,
+        query: str | None,
+        limit: int,
+        offset: int,
+    ) -> tuple[int, dict | str]:
+        params = {"limit": str(limit), "offset": str(offset)}
+        if query:
+            params["q"] = query
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout_sec) as client:
+                resp = await client.get(
+                    f"{self.base_url}/admin/tablatures",
+                    params=params,
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+        except httpx.HTTPError as exc:
+            raise ExternalServiceError(f"PostgreSQL service admin tablatures list failed: {exc}") from exc
+
+        try:
+            payload: dict | str = resp.json()
+        except ValueError:
+            payload = resp.text
+        return resp.status_code, payload
+
+    async def list_admin_courses(
+        self,
+        *,
+        token: str,
+        query: str | None,
+        limit: int,
+        offset: int,
+    ) -> tuple[int, dict | str]:
+        params = {"limit": str(limit), "offset": str(offset)}
+        if query:
+            params["q"] = query
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout_sec) as client:
+                resp = await client.get(
+                    f"{self.base_url}/admin/courses",
+                    params=params,
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+        except httpx.HTTPError as exc:
+            raise ExternalServiceError(f"PostgreSQL service admin courses list failed: {exc}") from exc
+
+        try:
+            payload: dict | str = resp.json()
+        except ValueError:
+            payload = resp.text
+        return resp.status_code, payload
+
+    async def get_admin_tablature(
+        self,
+        *,
+        token: str,
+        tablature_id: int,
+    ) -> tuple[int, dict | str]:
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout_sec) as client:
+                resp = await client.get(
+                    f"{self.base_url}/admin/tablatures/{tablature_id}",
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+        except httpx.HTTPError as exc:
+            raise ExternalServiceError(f"PostgreSQL service admin tablature get failed: {exc}") from exc
+
+        try:
+            payload: dict | str = resp.json()
+        except ValueError:
+            payload = resp.text
+        return resp.status_code, payload
+
+    async def update_admin_tablature_visibility(
+        self,
+        *,
+        token: str,
+        tablature_id: int,
+        visibility: str,
+    ) -> tuple[int, dict | str]:
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout_sec) as client:
+                resp = await client.patch(
+                    f"{self.base_url}/admin/tablatures/{tablature_id}/visibility",
+                    json={"visibility": visibility},
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+        except httpx.HTTPError as exc:
+            raise ExternalServiceError(f"PostgreSQL service admin tablature visibility update failed: {exc}") from exc
+
+        try:
+            payload: dict | str = resp.json()
+        except ValueError:
+            payload = resp.text
+        return resp.status_code, payload
+
+    async def delete_admin_tablature(
+        self,
+        *,
+        token: str,
+        tablature_id: int,
+    ) -> tuple[int, dict | str]:
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout_sec) as client:
+                resp = await client.delete(
+                    f"{self.base_url}/admin/tablatures/{tablature_id}",
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+        except httpx.HTTPError as exc:
+            raise ExternalServiceError(f"PostgreSQL service admin tablature delete failed: {exc}") from exc
+
+        try:
+            payload: dict | str = resp.json()
+        except ValueError:
+            payload = resp.text
+        return resp.status_code, payload
+
+    async def list_admin_tablature_comments(
+        self,
+        *,
+        token: str,
+        tablature_id: int,
+        limit: int,
+        offset: int,
+    ) -> tuple[int, dict | str]:
+        params = {"limit": str(limit), "offset": str(offset)}
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout_sec) as client:
+                resp = await client.get(
+                    f"{self.base_url}/admin/tablatures/{tablature_id}/comments",
+                    params=params,
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+        except httpx.HTTPError as exc:
+            raise ExternalServiceError(f"PostgreSQL service admin tablature comments list failed: {exc}") from exc
+
+        try:
+            payload: dict | str = resp.json()
+        except ValueError:
+            payload = resp.text
+        return resp.status_code, payload
+
+    async def delete_admin_tablature_comment(
+        self,
+        *,
+        token: str,
+        tablature_id: int,
+        comment_id: int,
+    ) -> tuple[int, dict | str]:
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout_sec) as client:
+                resp = await client.delete(
+                    f"{self.base_url}/admin/tablatures/{tablature_id}/comments/{comment_id}",
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+        except httpx.HTTPError as exc:
+            raise ExternalServiceError(f"PostgreSQL service admin tablature comment delete failed: {exc}") from exc
+
+        try:
+            payload: dict | str = resp.json()
+        except ValueError:
+            payload = resp.text
+        return resp.status_code, payload
+
+    async def get_admin_course(
+        self,
+        *,
+        token: str,
+        course_id: int,
+    ) -> tuple[int, dict | str]:
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout_sec) as client:
+                resp = await client.get(
+                    f"{self.base_url}/admin/courses/{course_id}",
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+        except httpx.HTTPError as exc:
+            raise ExternalServiceError(f"PostgreSQL service admin course get failed: {exc}") from exc
+
+        try:
+            payload: dict | str = resp.json()
+        except ValueError:
+            payload = resp.text
+        return resp.status_code, payload
+
+    async def update_admin_course_visibility(
+        self,
+        *,
+        token: str,
+        course_id: int,
+        visibility: str,
+    ) -> tuple[int, dict | str]:
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout_sec) as client:
+                resp = await client.patch(
+                    f"{self.base_url}/admin/courses/{course_id}/visibility",
+                    json={"visibility": visibility},
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+        except httpx.HTTPError as exc:
+            raise ExternalServiceError(f"PostgreSQL service admin course visibility update failed: {exc}") from exc
+
+        try:
+            payload: dict | str = resp.json()
+        except ValueError:
+            payload = resp.text
+        return resp.status_code, payload
+
+    async def delete_admin_course(
+        self,
+        *,
+        token: str,
+        course_id: int,
+    ) -> tuple[int, dict | str]:
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout_sec) as client:
+                resp = await client.delete(
+                    f"{self.base_url}/admin/courses/{course_id}",
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+        except httpx.HTTPError as exc:
+            raise ExternalServiceError(f"PostgreSQL service admin course delete failed: {exc}") from exc
+
+        try:
+            payload: dict | str = resp.json()
+        except ValueError:
+            payload = resp.text
+        return resp.status_code, payload
+
+    async def list_admin_course_lessons(
+        self,
+        *,
+        token: str,
+        course_id: int,
+    ) -> tuple[int, dict | str]:
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout_sec) as client:
+                resp = await client.get(
+                    f"{self.base_url}/admin/courses/{course_id}/lessons",
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+        except httpx.HTTPError as exc:
+            raise ExternalServiceError(f"PostgreSQL service admin course lessons list failed: {exc}") from exc
+
+        try:
+            payload: dict | str = resp.json()
+        except ValueError:
+            payload = resp.text
+        return resp.status_code, payload
+
+    async def list_admin_users(
+        self,
+        *,
+        token: str,
+        role: str | None,
+        query: str | None,
+        limit: int,
+        offset: int,
+    ) -> tuple[int, dict | str]:
+        params = {"limit": str(limit), "offset": str(offset)}
+        if role is not None and role.strip():
+            params["role"] = role.strip()
+        if query:
+            params["q"] = query
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout_sec) as client:
+                resp = await client.get(
+                    f"{self.base_url}/admin/users",
+                    params=params,
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+        except httpx.HTTPError as exc:
+            raise ExternalServiceError(f"PostgreSQL service admin users list failed: {exc}") from exc
+
+        try:
+            payload: dict | str = resp.json()
+        except ValueError:
+            payload = resp.text
+        return resp.status_code, payload
+
+    async def update_admin_user_account(
+        self,
+        *,
+        token: str,
+        user_id: int,
+        email: str | None = None,
+        nickname: str | None = None,
+        role: str | None = None,
+    ) -> tuple[int, dict | str]:
+        body: dict[str, object] = {}
+        if email is not None:
+            body["email"] = email
+        if nickname is not None:
+            body["nickname"] = nickname
+        if role is not None:
+            body["role"] = role
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout_sec) as client:
+                resp = await client.patch(
+                    f"{self.base_url}/admin/users/{user_id}",
+                    json=body,
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+        except httpx.HTTPError as exc:
+            raise ExternalServiceError(f"PostgreSQL service admin user update failed: {exc}") from exc
+
+        try:
+            payload: dict | str = resp.json()
+        except ValueError:
+            payload = resp.text
+        return resp.status_code, payload
+
+    async def delete_admin_user(
+        self,
+        *,
+        token: str,
+        user_id: int,
+    ) -> tuple[int, dict | str]:
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout_sec) as client:
+                resp = await client.delete(
+                    f"{self.base_url}/admin/users/{user_id}",
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+        except httpx.HTTPError as exc:
+            raise ExternalServiceError(f"PostgreSQL service admin user delete failed: {exc}") from exc
+
+        try:
+            payload: dict | str = resp.json()
+        except ValueError:
+            payload = resp.text
+        return resp.status_code, payload
+
     async def list_admin_author_role_requests(
         self,
         *,

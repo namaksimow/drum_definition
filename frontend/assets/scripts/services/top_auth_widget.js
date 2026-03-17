@@ -5,6 +5,11 @@ const AUTH_USER_KEY = "drum_auth_user";
 const ADMIN_CONSOLE_PATH = "/admin/console";
 const AUTH_PAGE_PATH = "/auth";
 
+function shouldKeepAdminOnCurrentPage() {
+  const params = new URLSearchParams(window.location.search || "");
+  return String(params.get("admin") || "").toLowerCase() === "1";
+}
+
 function isAdminUser(user) {
   const role = String(user?.role || "").toLowerCase();
   const email = String(user?.email || "").toLowerCase();
@@ -14,6 +19,7 @@ function isAdminUser(user) {
 function redirectAfterAuthIfAdmin(user) {
   if (!isAdminUser(user)) return;
   if (window.location.pathname.startsWith("/admin")) return;
+  if (shouldKeepAdminOnCurrentPage()) return;
   window.location.href = ADMIN_CONSOLE_PATH;
 }
 

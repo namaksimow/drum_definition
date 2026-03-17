@@ -1,11 +1,13 @@
-import * as api from "../services/api.js?v=15";
-import { initTopAuthWidget } from "../services/top_auth_widget.js?v=8";
+import * as api from "../services/api.js?v=16";
+import { initTopAuthWidget } from "../services/top_auth_widget.js?v=9";
 
 const titleEl = document.getElementById("courseTitle");
 const subtitleEl = document.getElementById("courseSubtitle");
 const statusEl = document.getElementById("status");
 const lessonEditorPanel = document.getElementById("lessonEditorPanel");
 const lessonsList = document.getElementById("lessonsList");
+const shellEl = document.querySelector(".course-detail-shell");
+const courseBackLinkEl = document.getElementById("courseBackLink");
 
 const newLessonTitle = document.getElementById("newLessonTitle");
 const newLessonContent = document.getElementById("newLessonContent");
@@ -17,6 +19,8 @@ let authUser = null;
 let courseId = null;
 let editableRequested = false;
 let editableMode = false;
+let adminViewRequested = false;
+let adminViewEnabled = false;
 let lastProgressErrorMessage = "";
 let lastCourseUpdatedAtText = "";
 let courseVisitTracked = false;
@@ -70,8 +74,33 @@ function formatUpdatedAt(value) {
   return formatCreatedAt(value);
 }
 
+function isAdminUser(user) {
+  const role = String(user?.role || "").toLowerCase();
+  const email = String(user?.email || "").toLowerCase();
+  return role === "admin" || email === "admin@mail.ru";
+}
+
 function canEditRequestedLessons() {
-  return editableRequested && !!authToken && String(authUser?.role || "").toLowerCase() === "author";
+  return (
+    !adminViewEnabled &&
+    editableRequested &&
+    !!authToken &&
+    String(authUser?.role || "").toLowerCase() === "author"
+  );
+}
+
+function canTrackLessonProgress() {
+  return !adminViewEnabled && Boolean(authToken);
+}
+
+function applyLayoutMode() {
+  if (!shellEl) return;
+  shellEl.classList.toggle("course-detail-shell--admin", adminViewEnabled);
+}
+
+function applyBackLink() {
+  if (!courseBackLinkEl) return;
+  courseBackLinkEl.setAttribute("href", adminViewEnabled ? "/admin/console" : "/courses");
 }
 
 function setEditorVisible(visible) {
@@ -82,11 +111,17 @@ function setEditorVisible(visible) {
 async function loadCourseMeta() {
   if (!courseId) return;
   try {
-    const payload = editableMode
-      ? await api.fetchPersonalCourses(authToken, String(courseId), { limit: 200, offset: 0 })
-      : await api.fetchCourses(String(courseId), { limit: 200, offset: 0 });
-    const items = Array.isArray(payload.items) ? payload.items : [];
-    const course = items.find((item) => Number(item.id) === Number(courseId)) || null;
+    let course = null;
+    if (adminViewEnabled) {
+      const payload = await api.fetchAdminCourseById(authToken, courseId);
+      course = payload && payload.course ? payload.course : null;
+    } else {
+      const payload = editableMode
+        ? await api.fetchPersonalCourses(authToken, String(courseId), { limit: 200, offset: 0 })
+        : await api.fetchCourses(String(courseId), { limit: 200, offset: 0 });
+      const items = Array.isArray(payload.items) ? payload.items : [];
+      course = items.find((item) => Number(item.id) === Number(courseId)) || null;
+    }
     if (!course) {
       if (titleEl) titleEl.textContent = `Курс #${courseId}`;
       if (subtitleEl) subtitleEl.textContent = "Курс не найден.";
@@ -96,7 +131,9 @@ async function loadCourseMeta() {
     lastCourseUpdatedAtText = formatUpdatedAt(course.updated_at);
     if (subtitleEl) {
       let mode = editableMode ? "Режим редактирования уроков" : "Режим просмотра уроков";
-      if (!editableMode && authToken) {
+      if (adminViewEnabled) {
+        mode = `Режим администратора • Видимость: ${course.visibility || "private"}`;
+      } else if (!editableMode && authToken) {
         mode = "Режим просмотра уроков (можно отмечать пройденные)";
       }
       subtitleEl.textContent = `Автор: ${course.author || "unknown"} • Обновлен: ${lastCourseUpdatedAtText} • ${mode}`;
@@ -138,7 +175,7 @@ function renderLessons(items) {
   }
 
   if (!editableMode) {
-    const canTrack = Boolean(authToken);
+    const canTrack = canTrackLessonProgress();
     lessonsList.innerHTML = items
       .map(
         (item) => `
@@ -146,6 +183,7 @@ function renderLessons(items) {
             <h3 class="lesson__title">${escapeHtml(item.title || "Без названия")}</h3>
             <p class="lesson__meta">Позиция: ${Number(item.position) || 1} • Обновлен: ${formatCreatedAt(item.updated_at)}</p>
             <p class="lesson__content">${escapeHtml(item.content || "")}</p>
+            ${canTrack ? `
             <div class="lesson__progress">
               <label class="lesson__progress-label">
                 <input
@@ -156,7 +194,7 @@ function renderLessons(items) {
                 />
                 Пройдено
               </label>
-            </div>
+            </div>` : ""}
           </article>
         `
       )
@@ -189,6 +227,16 @@ async function loadLessonsAndRender() {
   editableMode = false;
 
   try {
+    if (adminViewEnabled) {
+      const payload = await api.fetchAdminCourseLessons(authToken, courseId);
+      const items = Array.isArray(payload.items) ? payload.items : [];
+      renderLessons(items);
+      setEditorVisible(false);
+      await loadCourseMeta();
+      setStatus(`Загружено уроков: ${items.length}`);
+      return;
+    }
+
     let payload;
     if (canEditRequestedLessons()) {
       try {
@@ -205,7 +253,7 @@ async function loadLessonsAndRender() {
 
     let items = Array.isArray(payload.items) ? payload.items : [];
     lastProgressErrorMessage = "";
-    if (!editableMode && authToken) {
+    if (!editableMode && canTrackLessonProgress()) {
       try {
         const progressPayload = await api.fetchPersonalCourseLessonProgress(authToken, courseId);
         const progressItems = Array.isArray(progressPayload.items) ? progressPayload.items : [];
@@ -217,7 +265,7 @@ async function loadLessonsAndRender() {
     renderLessons(items);
     setEditorVisible(editableMode);
     await loadCourseMeta();
-    if (!editableMode && authToken && !courseVisitTracked) {
+    if (!editableMode && canTrackLessonProgress() && !courseVisitTracked) {
       try {
         await api.trackPersonalCourseVisit(authToken, courseId);
         courseVisitTracked = true;
@@ -279,7 +327,7 @@ if (addLessonBtn) {
 
 if (lessonsList) {
   lessonsList.addEventListener("change", async (event) => {
-    if (editableMode || !authToken || !courseId) return;
+    if (editableMode || adminViewEnabled || !authToken || !courseId) return;
     const target = event.target;
     if (!(target instanceof HTMLInputElement)) return;
     if (!target.matches("[data-progress-lesson-id]")) return;
@@ -374,16 +422,29 @@ async function init() {
 
   const params = new URLSearchParams(window.location.search || "");
   editableRequested = String(params.get("editable") || "").toLowerCase() === "1";
+  adminViewRequested = String(params.get("admin") || "").toLowerCase() === "1";
 
   await initTopAuthWidget({
     onAuthChanged: async ({ token, user }) => {
       authToken = token || "";
       authUser = user || null;
+      adminViewEnabled = adminViewRequested && isAdminUser(authUser) && Boolean(authToken);
+      applyLayoutMode();
+      applyBackLink();
       await loadLessonsAndRender();
+      if (adminViewRequested && !adminViewEnabled) {
+        setStatus("Режим администратора недоступен. Показан публичный просмотр.");
+      }
     },
   });
 
+  adminViewEnabled = adminViewRequested && isAdminUser(authUser) && Boolean(authToken);
+  applyLayoutMode();
+  applyBackLink();
   await loadLessonsAndRender();
+  if (adminViewRequested && !adminViewEnabled) {
+    setStatus("Режим администратора недоступен. Показан публичный просмотр.");
+  }
 }
 
 init();

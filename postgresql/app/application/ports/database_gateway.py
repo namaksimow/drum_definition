@@ -188,6 +188,78 @@ class DatabaseGateway(Protocol):
     async def create_author_role_request(self, *, user_id: int, message: str) -> dict:
         ...
 
+    async def list_admin_tablatures(self, *, query: str | None, limit: int, offset: int) -> list[dict]:
+        ...
+
+    async def list_admin_courses(self, *, query: str | None, limit: int, offset: int) -> list[dict]:
+        ...
+
+    async def get_admin_tablature(self, *, tablature_id: int) -> dict | None:
+        ...
+
+    async def update_admin_tablature_visibility(
+        self,
+        *,
+        tablature_id: int,
+        visibility: str,
+    ) -> dict | None:
+        ...
+
+    async def delete_admin_tablature(self, *, tablature_id: int) -> bool:
+        ...
+
+    async def list_admin_tablature_comments(
+        self,
+        *,
+        tablature_id: int,
+        limit: int,
+        offset: int,
+    ) -> list[dict] | None:
+        ...
+
+    async def delete_admin_tablature_comment(self, *, tablature_id: int, comment_id: int) -> bool:
+        ...
+
+    async def get_admin_course(self, *, course_id: int) -> dict | None:
+        ...
+
+    async def update_admin_course_visibility(
+        self,
+        *,
+        course_id: int,
+        visibility: str,
+    ) -> dict | None:
+        ...
+
+    async def delete_admin_course(self, *, course_id: int) -> bool:
+        ...
+
+    async def list_admin_course_lessons(self, *, course_id: int) -> list[dict] | None:
+        ...
+
+    async def list_admin_users(
+        self,
+        *,
+        role: str | None,
+        query: str | None,
+        limit: int,
+        offset: int,
+    ) -> list[dict]:
+        ...
+
+    async def update_admin_user_account(
+        self,
+        *,
+        user_id: int,
+        email: str | None = None,
+        nickname: str | None = None,
+        role: str | None = None,
+    ) -> dict | None:
+        ...
+
+    async def delete_admin_user(self, *, user_id: int) -> bool:
+        ...
+
     async def list_author_role_requests(
         self,
         *,

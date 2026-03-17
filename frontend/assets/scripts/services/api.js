@@ -287,6 +287,250 @@ export async function createPersonalAuthorRoleRequest(token, message) {
   return payload;
 }
 
+export async function fetchAdminTablatures(token, query = "", options = {}) {
+  const limit = Number.isFinite(options.limit) ? Number(options.limit) : 200;
+  const offset = Number.isFinite(options.offset) ? Number(options.offset) : 0;
+  const params = new URLSearchParams();
+  params.set("limit", String(limit));
+  params.set("offset", String(offset));
+  if (query.trim()) {
+    params.set("q", query.trim());
+  }
+  const response = await fetch(`/api/admin/tablatures?${params.toString()}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
+export async function fetchAdminCourses(token, query = "", options = {}) {
+  const limit = Number.isFinite(options.limit) ? Number(options.limit) : 200;
+  const offset = Number.isFinite(options.offset) ? Number(options.offset) : 0;
+  const params = new URLSearchParams();
+  params.set("limit", String(limit));
+  params.set("offset", String(offset));
+  if (query.trim()) {
+    params.set("q", query.trim());
+  }
+  const response = await fetch(`/api/admin/courses?${params.toString()}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
+export async function fetchAdminTablatureById(token, tablatureId) {
+  const response = await fetch(`/api/admin/tablatures/${encodeURIComponent(tablatureId)}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
+export async function updateAdminTablatureVisibility(token, tablatureId, visibility) {
+  const response = await fetch(`/api/admin/tablatures/${encodeURIComponent(tablatureId)}/visibility`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ visibility }),
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
+export async function deleteAdminTablature(token, tablatureId) {
+  const response = await fetch(`/api/admin/tablatures/${encodeURIComponent(tablatureId)}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
+export async function fetchAdminTablatureComments(token, tablatureId, { limit = 100, offset = 0 } = {}) {
+  const params = new URLSearchParams();
+  params.set("limit", String(limit));
+  params.set("offset", String(offset));
+  const response = await fetch(
+    `/api/admin/tablatures/${encodeURIComponent(tablatureId)}/comments?${params.toString()}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
+export async function deleteAdminTablatureComment(token, tablatureId, commentId) {
+  const response = await fetch(
+    `/api/admin/tablatures/${encodeURIComponent(tablatureId)}/comments/${encodeURIComponent(commentId)}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
+export async function fetchAdminCourseById(token, courseId) {
+  const response = await fetch(`/api/admin/courses/${encodeURIComponent(courseId)}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
+export async function updateAdminCourseVisibility(token, courseId, visibility) {
+  const response = await fetch(`/api/admin/courses/${encodeURIComponent(courseId)}/visibility`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ visibility }),
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
+export async function deleteAdminCourse(token, courseId) {
+  const response = await fetch(`/api/admin/courses/${encodeURIComponent(courseId)}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
+export async function fetchAdminCourseLessons(token, courseId) {
+  const response = await fetch(`/api/admin/courses/${encodeURIComponent(courseId)}/lessons`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
+export async function fetchAdminUsers(token, { role = "all", query = "", limit = 200, offset = 0 } = {}) {
+  const params = new URLSearchParams();
+  params.set("limit", String(limit));
+  params.set("offset", String(offset));
+  if (role && String(role).trim()) {
+    params.set("role", String(role).trim());
+  }
+  if (query && String(query).trim()) {
+    params.set("q", String(query).trim());
+  }
+  const response = await fetch(`/api/admin/users?${params.toString()}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
+export async function updateAdminUserAccount(
+  token,
+  userId,
+  { email = undefined, nickname = undefined, role = undefined } = {}
+) {
+  const body = {};
+  if (typeof email !== "undefined") {
+    body.email = email;
+  }
+  if (typeof nickname !== "undefined") {
+    body.nickname = nickname;
+  }
+  if (typeof role !== "undefined") {
+    body.role = role;
+  }
+
+  const response = await fetch(`/api/admin/users/${encodeURIComponent(userId)}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(body),
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
+export async function deleteAdminUser(token, userId) {
+  const response = await fetch(`/api/admin/users/${encodeURIComponent(userId)}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload === "object" ? JSON.stringify(payload) : String(payload));
+  }
+  return payload;
+}
+
 export async function fetchAdminAuthorRoleRequests(token, { status = "pending", limit = 100, offset = 0 } = {}) {
   const params = new URLSearchParams();
   params.set("limit", String(limit));

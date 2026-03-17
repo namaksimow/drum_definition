@@ -6,14 +6,14 @@
   <title>Админ Панель</title>
   <link rel="stylesheet" href="/assets/styles/base.css" />
   <link rel="stylesheet" href="/assets/styles/components.css?v=5" />
-  <link rel="stylesheet" href="/assets/styles/pages/admin.css?v=3" />
+  <link rel="stylesheet" href="/assets/styles/pages/admin.css?v=9" />
 </head>
 <body>
   <main class="admin-page">
     <header class="admin-page__header">
       <div class="admin-page__intro">
         <p class="admin-page__kicker">Admin Console</p>
-        <h1 class="admin-page__title">Заявки на роль автора</h1>
+        <h1 class="admin-page__title">Админ-консоль</h1>
         <p class="admin-page__subtitle" id="subtitle">Загрузка...</p>
       </div>
 
@@ -65,6 +65,24 @@
       </div>
     </section>
 
+    <section class="panel">
+      <h2 class="panel__title">Табулатуры пользователей</h2>
+      <div class="cards" id="adminTablaturesList">
+        <article class="card">
+          <h3 class="card__title">Загрузка...</h3>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel__title">Курсы пользователей</h2>
+      <div class="cards" id="adminCoursesList">
+        <article class="card">
+          <h3 class="card__title">Загрузка...</h3>
+        </article>
+      </div>
+    </section>
+
     <section class="panel is-hidden" id="requestDetailPanel">
       <h2 class="panel__title">Детали заявки</h2>
       <div class="request-detail" id="requestDetailContent">
@@ -81,11 +99,49 @@
     </section>
 
     <section class="panel">
+      <h2 class="panel__title">Учетные записи пользователей</h2>
+      <div class="cards" id="adminUsersList">
+        <article class="card">
+          <h3 class="card__title">Загрузка...</h3>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
       <h2 class="panel__title">Статус</h2>
       <pre class="status" id="status">Готово к работе.</pre>
     </section>
   </main>
 
-  <script type="module" src="/assets/scripts/pages/admin.js?v=7"></script>
+  <section class="user-modal is-hidden" id="userDetailPanel" aria-modal="true" role="dialog" aria-labelledby="userCardTitle">
+    <div class="user-modal__backdrop" id="userModalBackdrop"></div>
+    <article class="user-modal__card user-editor" id="userDetailContent">
+      <div class="user-modal__header">
+        <h2 class="user-modal__title" id="userCardTitle">Редактирование аккаунта</h2>
+        <button class="btn btn--secondary" id="closeUserModalBtn" type="button">Закрыть</button>
+      </div>
+
+      <p class="user-editor__meta" id="userDetailMeta">-</p>
+
+      <label class="field-label" for="userEditEmailInput">Email</label>
+      <input class="field-input" id="userEditEmailInput" type="email" placeholder="user@example.com" />
+
+      <label class="field-label" for="userEditNicknameInput">Никнейм</label>
+      <input class="field-input" id="userEditNicknameInput" type="text" placeholder="nickname" />
+
+      <label class="field-label" for="userEditRoleSelect">Роль</label>
+      <select class="field-input" id="userEditRoleSelect">
+        <option value="user">user</option>
+        <option value="author">author</option>
+      </select>
+
+      <div class="user-editor__actions">
+        <button class="btn btn--primary" id="saveUserBtn" type="button">Сохранить изменения</button>
+        <button class="btn btn--secondary user-editor__delete-btn" id="deleteUserBtn" type="button">Удалить пользователя</button>
+      </div>
+    </article>
+  </section>
+
+  <script type="module" src="/assets/scripts/pages/admin.js?v=14"></script>
 </body>
 </html>

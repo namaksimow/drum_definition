@@ -66,6 +66,16 @@ class UpdatePersonalCourseRequest(BaseModel):
     cover_image_path: Optional[str] = Field(default=None, max_length=1000)
 
 
+class UpdateAdminVisibilityRequest(BaseModel):
+    visibility: str = Field(min_length=1, max_length=64)
+
+
+class UpdateAdminUserAccountRequest(BaseModel):
+    email: Optional[str] = Field(default=None, max_length=320)
+    nickname: Optional[str] = Field(default=None, max_length=64)
+    role: Optional[str] = Field(default=None, max_length=32)
+
+
 class CreateCourseLessonRequest(BaseModel):
     title: str = Field(min_length=1, max_length=255)
     content: Optional[str] = Field(default="", max_length=20000)
@@ -1040,6 +1050,286 @@ def build_router(container: Container) -> APIRouter:
                     "updated_at": request_item.updated_at,
                 }
             }
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.get("/api/admin/tablatures")
+    async def list_admin_tablatures(
+        authorization: Optional[str] = Header(default=None),
+        q: Optional[str] = Query(default=None),
+        limit: int = Query(default=200, ge=1, le=500),
+        offset: int = Query(default=0, ge=0),
+    ) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            items = await container.list_admin_tablatures.execute(
+                token=token,
+                query=q,
+                limit=limit,
+                offset=offset,
+            )
+            return {"count": len(items), "items": items}
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.get("/api/admin/courses")
+    async def list_admin_courses(
+        authorization: Optional[str] = Header(default=None),
+        q: Optional[str] = Query(default=None),
+        limit: int = Query(default=200, ge=1, le=500),
+        offset: int = Query(default=0, ge=0),
+    ) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            items = await container.list_admin_courses.execute(
+                token=token,
+                query=q,
+                limit=limit,
+                offset=offset,
+            )
+            return {"count": len(items), "items": items}
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.get("/api/admin/tablatures/{tablature_id}")
+    async def get_admin_tablature_by_id(
+        tablature_id: int,
+        authorization: Optional[str] = Header(default=None),
+    ) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            tablature = await container.get_admin_tablature_by_id.execute(
+                token=token,
+                tablature_id=tablature_id,
+            )
+            return {"tablature": tablature}
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.patch("/api/admin/tablatures/{tablature_id}/visibility")
+    async def patch_admin_tablature_visibility(
+        tablature_id: int,
+        payload: UpdateAdminVisibilityRequest,
+        authorization: Optional[str] = Header(default=None),
+    ) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            tablature = await container.update_admin_tablature_visibility.execute(
+                token=token,
+                tablature_id=tablature_id,
+                visibility=payload.visibility,
+            )
+            return {"tablature": tablature}
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.delete("/api/admin/tablatures/{tablature_id}")
+    async def delete_admin_tablature(
+        tablature_id: int,
+        authorization: Optional[str] = Header(default=None),
+    ) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            deleted = await container.delete_admin_tablature.execute(
+                token=token,
+                tablature_id=tablature_id,
+            )
+            return {"deleted": bool(deleted)}
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.get("/api/admin/tablatures/{tablature_id}/comments")
+    async def list_admin_tablature_comments(
+        tablature_id: int,
+        authorization: Optional[str] = Header(default=None),
+        limit: int = Query(default=100, ge=1, le=500),
+        offset: int = Query(default=0, ge=0),
+    ) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            items = await container.list_admin_tablature_comments.execute(
+                token=token,
+                tablature_id=tablature_id,
+                limit=limit,
+                offset=offset,
+            )
+            return {"count": len(items), "items": items}
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.delete("/api/admin/tablatures/{tablature_id}/comments/{comment_id}")
+    async def delete_admin_tablature_comment(
+        tablature_id: int,
+        comment_id: int,
+        authorization: Optional[str] = Header(default=None),
+    ) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            deleted = await container.delete_admin_tablature_comment.execute(
+                token=token,
+                tablature_id=tablature_id,
+                comment_id=comment_id,
+            )
+            return {"deleted": bool(deleted)}
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.get("/api/admin/courses/{course_id}")
+    async def get_admin_course_by_id(
+        course_id: int,
+        authorization: Optional[str] = Header(default=None),
+    ) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            course = await container.get_admin_course_by_id.execute(
+                token=token,
+                course_id=course_id,
+            )
+            return {"course": course}
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.patch("/api/admin/courses/{course_id}/visibility")
+    async def patch_admin_course_visibility(
+        course_id: int,
+        payload: UpdateAdminVisibilityRequest,
+        authorization: Optional[str] = Header(default=None),
+    ) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            course = await container.update_admin_course_visibility.execute(
+                token=token,
+                course_id=course_id,
+                visibility=payload.visibility,
+            )
+            return {"course": course}
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.delete("/api/admin/courses/{course_id}")
+    async def delete_admin_course(
+        course_id: int,
+        authorization: Optional[str] = Header(default=None),
+    ) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            deleted = await container.delete_admin_course.execute(
+                token=token,
+                course_id=course_id,
+            )
+            return {"deleted": bool(deleted)}
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.get("/api/admin/courses/{course_id}/lessons")
+    async def list_admin_course_lessons(
+        course_id: int,
+        authorization: Optional[str] = Header(default=None),
+    ) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            items = await container.list_admin_course_lessons.execute(
+                token=token,
+                course_id=course_id,
+            )
+            return {
+                "count": len(items),
+                "items": [
+                    {
+                        "id": item.id,
+                        "course_id": item.course_id,
+                        "title": item.title,
+                        "content": item.content,
+                        "position": item.position,
+                        "created_at": item.created_at,
+                        "updated_at": item.updated_at,
+                    }
+                    for item in items
+                ],
+            }
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.get("/api/admin/users")
+    async def list_admin_users(
+        authorization: Optional[str] = Header(default=None),
+        role: Optional[str] = Query(default="all"),
+        q: Optional[str] = Query(default=None),
+        limit: int = Query(default=200, ge=1, le=500),
+        offset: int = Query(default=0, ge=0),
+    ) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            items = await container.list_admin_users.execute(
+                token=token,
+                role=role,
+                query=q,
+                limit=limit,
+                offset=offset,
+            )
+            return {"count": len(items), "items": items}
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.patch("/api/admin/users/{user_id}")
+    async def patch_admin_user_account(
+        user_id: int,
+        payload: UpdateAdminUserAccountRequest,
+        authorization: Optional[str] = Header(default=None),
+    ) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            user = await container.update_admin_user_account.execute(
+                token=token,
+                user_id=user_id,
+                email=payload.email,
+                nickname=payload.nickname,
+                role=payload.role,
+            )
+            return {"user": user}
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.delete("/api/admin/users/{user_id}")
+    async def delete_admin_user(
+        user_id: int,
+        authorization: Optional[str] = Header(default=None),
+    ) -> dict:
+        try:
+            token = _extract_bearer_token(authorization)
+            deleted = await container.delete_admin_user.execute(
+                token=token,
+                user_id=user_id,
+            )
+            return {"deleted": bool(deleted)}
         except HTTPException:
             raise
         except Exception as exc:  # noqa: BLE001

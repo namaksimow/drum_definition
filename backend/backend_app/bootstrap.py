@@ -8,12 +8,18 @@ from backend_app.adapters.ml_service_http import MlServiceHttpAdapter
 from backend_app.adapters.postgres_service_http import PostgresServiceHttpAdapter
 from backend_app.application.use_cases.download_public_tablature_json import DownloadPublicTablatureJsonUseCase
 from backend_app.application.use_cases.create_personal_author_role_request import CreatePersonalAuthorRoleRequestUseCase
+from backend_app.application.use_cases.delete_admin_course import DeleteAdminCourseUseCase
+from backend_app.application.use_cases.delete_admin_tablature_comment import DeleteAdminTablatureCommentUseCase
+from backend_app.application.use_cases.delete_admin_tablature import DeleteAdminTablatureUseCase
+from backend_app.application.use_cases.delete_admin_user import DeleteAdminUserUseCase
 from backend_app.application.use_cases.create_personal_course_lesson import CreatePersonalCourseLessonUseCase
 from backend_app.application.use_cases.create_course import CreateCourseUseCase
 from backend_app.application.use_cases.delete_personal_course_lesson import DeletePersonalCourseLessonUseCase
 from backend_app.application.use_cases.delete_personal_course import DeletePersonalCourseUseCase
 from backend_app.application.use_cases.create_public_tablature_comment import CreatePublicTablatureCommentUseCase
 from backend_app.application.use_cases.get_current_user import GetCurrentUserUseCase
+from backend_app.application.use_cases.get_admin_course_by_id import GetAdminCourseByIdUseCase
+from backend_app.application.use_cases.get_admin_tablature_by_id import GetAdminTablatureByIdUseCase
 from backend_app.application.use_cases.get_index_page import GetIndexPageUseCase
 from backend_app.application.use_cases.get_job_by_id import GetJobByIdUseCase
 from backend_app.application.use_cases.get_personal_author_role_request import GetPersonalAuthorRoleRequestUseCase
@@ -24,6 +30,11 @@ from backend_app.application.use_cases.get_personal_tablature_by_id import GetPe
 from backend_app.application.use_cases.get_pdf_by_job_id import GetPdfByJobIdUseCase
 from backend_app.application.use_cases.get_tablature_by_job_id import GetTablatureByJobIdUseCase
 from backend_app.application.use_cases.login_user import LoginUserUseCase
+from backend_app.application.use_cases.list_admin_courses import ListAdminCoursesUseCase
+from backend_app.application.use_cases.list_admin_course_lessons import ListAdminCourseLessonsUseCase
+from backend_app.application.use_cases.list_admin_tablature_comments import ListAdminTablatureCommentsUseCase
+from backend_app.application.use_cases.list_admin_tablatures import ListAdminTablaturesUseCase
+from backend_app.application.use_cases.list_admin_users import ListAdminUsersUseCase
 from backend_app.application.use_cases.list_public_tablature_comments import ListPublicTablatureCommentsUseCase
 from backend_app.application.use_cases.list_public_course_lessons import ListPublicCourseLessonsUseCase
 from backend_app.application.use_cases.list_public_courses import ListPublicCoursesUseCase
@@ -37,6 +48,9 @@ from backend_app.application.use_cases.register_user import RegisterUserUseCase
 from backend_app.application.use_cases.set_public_tablature_reaction import SetPublicTablatureReactionUseCase
 from backend_app.application.use_cases.update_current_user import UpdateCurrentUserUseCase
 from backend_app.application.use_cases.update_admin_author_role_request import UpdateAdminAuthorRoleRequestUseCase
+from backend_app.application.use_cases.update_admin_course_visibility import UpdateAdminCourseVisibilityUseCase
+from backend_app.application.use_cases.update_admin_tablature_visibility import UpdateAdminTablatureVisibilityUseCase
+from backend_app.application.use_cases.update_admin_user_account import UpdateAdminUserAccountUseCase
 from backend_app.application.use_cases.set_personal_course_lesson_progress import SetPersonalCourseLessonProgressUseCase
 from backend_app.application.use_cases.track_personal_course_visit import TrackPersonalCourseVisitUseCase
 from backend_app.application.use_cases.update_personal_course_lesson import UpdatePersonalCourseLessonUseCase
@@ -84,6 +98,20 @@ class Container:
     update_current_user: UpdateCurrentUserUseCase
     get_personal_author_role_request: GetPersonalAuthorRoleRequestUseCase
     create_personal_author_role_request: CreatePersonalAuthorRoleRequestUseCase
+    list_admin_tablatures: ListAdminTablaturesUseCase
+    get_admin_tablature_by_id: GetAdminTablatureByIdUseCase
+    update_admin_tablature_visibility: UpdateAdminTablatureVisibilityUseCase
+    delete_admin_tablature: DeleteAdminTablatureUseCase
+    list_admin_tablature_comments: ListAdminTablatureCommentsUseCase
+    delete_admin_tablature_comment: DeleteAdminTablatureCommentUseCase
+    list_admin_courses: ListAdminCoursesUseCase
+    get_admin_course_by_id: GetAdminCourseByIdUseCase
+    update_admin_course_visibility: UpdateAdminCourseVisibilityUseCase
+    delete_admin_course: DeleteAdminCourseUseCase
+    list_admin_course_lessons: ListAdminCourseLessonsUseCase
+    list_admin_users: ListAdminUsersUseCase
+    update_admin_user_account: UpdateAdminUserAccountUseCase
+    delete_admin_user: DeleteAdminUserUseCase
     list_admin_author_role_requests: ListAdminAuthorRoleRequestsUseCase
     update_admin_author_role_request: UpdateAdminAuthorRoleRequestUseCase
     frontend_assets_dir: str
@@ -140,6 +168,20 @@ def get_container() -> Container:
         update_current_user=UpdateCurrentUserUseCase(postgres_service=postgres_adapter),
         get_personal_author_role_request=GetPersonalAuthorRoleRequestUseCase(postgres_service=postgres_adapter),
         create_personal_author_role_request=CreatePersonalAuthorRoleRequestUseCase(postgres_service=postgres_adapter),
+        list_admin_tablatures=ListAdminTablaturesUseCase(postgres_service=postgres_adapter),
+        get_admin_tablature_by_id=GetAdminTablatureByIdUseCase(postgres_service=postgres_adapter),
+        update_admin_tablature_visibility=UpdateAdminTablatureVisibilityUseCase(postgres_service=postgres_adapter),
+        delete_admin_tablature=DeleteAdminTablatureUseCase(postgres_service=postgres_adapter),
+        list_admin_tablature_comments=ListAdminTablatureCommentsUseCase(postgres_service=postgres_adapter),
+        delete_admin_tablature_comment=DeleteAdminTablatureCommentUseCase(postgres_service=postgres_adapter),
+        list_admin_courses=ListAdminCoursesUseCase(postgres_service=postgres_adapter),
+        get_admin_course_by_id=GetAdminCourseByIdUseCase(postgres_service=postgres_adapter),
+        update_admin_course_visibility=UpdateAdminCourseVisibilityUseCase(postgres_service=postgres_adapter),
+        delete_admin_course=DeleteAdminCourseUseCase(postgres_service=postgres_adapter),
+        list_admin_course_lessons=ListAdminCourseLessonsUseCase(postgres_service=postgres_adapter),
+        list_admin_users=ListAdminUsersUseCase(postgres_service=postgres_adapter),
+        update_admin_user_account=UpdateAdminUserAccountUseCase(postgres_service=postgres_adapter),
+        delete_admin_user=DeleteAdminUserUseCase(postgres_service=postgres_adapter),
         list_admin_author_role_requests=ListAdminAuthorRoleRequestsUseCase(postgres_service=postgres_adapter),
         update_admin_author_role_request=UpdateAdminAuthorRoleRequestUseCase(postgres_service=postgres_adapter),
         frontend_assets_dir=str(frontend_adapter.assets_dir()),

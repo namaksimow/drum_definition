@@ -1,4 +1,4 @@
-import * as api from "../services/api.js?v=10";
+import * as api from "../services/api.js?v=11";
 
 const AUTH_TOKEN_KEY = "drum_auth_token";
 
@@ -9,6 +9,7 @@ const commentsListEl = document.getElementById("commentsList");
 const commentInputEl = document.getElementById("commentInput");
 const commentSubmitBtn = document.getElementById("commentSubmitBtn");
 const reactionHintEl = document.getElementById("reactionHint");
+const backLinkEl = document.getElementById("backLink");
 
 const reactionLikeBtn = document.getElementById("reactionLikeBtn");
 const reactionFireBtn = document.getElementById("reactionFireBtn");
@@ -22,6 +23,8 @@ const state = {
   authToken: "",
   authUser: null,
   currentReaction: null,
+  adminViewRequested: false,
+  adminViewEnabled: false,
 };
 
 function setStatus(message) {
@@ -58,6 +61,27 @@ function formatCreatedAt(value) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function isAdminUser(user) {
+  const role = String(user?.role || "").toLowerCase();
+  const email = String(user?.email || "").toLowerCase();
+  return role === "admin" || email === "admin@mail.ru";
+}
+
+function updateAdminMode() {
+  state.adminViewEnabled = Boolean(
+    state.adminViewRequested && state.authToken && state.authUser && isAdminUser(state.authUser)
+  );
 }
 
 function asTabData(jsonFormat) {
@@ -112,14 +136,22 @@ function renderComments(items) {
   }
 
   commentsListEl.innerHTML = items
-    .map(
-      (item) => `
+    .map((item) => {
+      const actions = state.adminViewEnabled
+        ? `
+          <div class="comment-item__actions">
+            <button class="btn btn--secondary" type="button" data-delete-comment-id="${item.id}">Удалить</button>
+          </div>
+        `
+        : "";
+      return `
         <article class="comment-item">
-          <p class="comment-item__head">${item.author || "unknown"} • ${formatCreatedAt(item.created_at)}</p>
-          <p class="comment-item__body">${String(item.content || "").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
+          <p class="comment-item__head">${escapeHtml(item.author || "unknown")} • ${formatCreatedAt(item.created_at)}</p>
+          <p class="comment-item__body">${escapeHtml(item.content || "")}</p>
+          ${actions}
         </article>
-      `
-    )
+      `;
+    })
     .join("");
 }
 
@@ -139,33 +171,58 @@ function updateReactionButtons(counts = {}, myReaction = null) {
 
 function applyAuthUI() {
   const isAuthed = Boolean(state.authToken && state.authUser);
-  if (commentInputEl) commentInputEl.disabled = !isAuthed;
-  if (commentSubmitBtn) commentSubmitBtn.disabled = !isAuthed;
+  const isAdminMode = Boolean(state.adminViewEnabled);
+  if (commentInputEl) commentInputEl.disabled = !isAuthed || isAdminMode;
+  if (commentSubmitBtn) commentSubmitBtn.disabled = !isAuthed || isAdminMode;
+  if (reactionLikeBtn) reactionLikeBtn.disabled = isAdminMode;
+  if (reactionFireBtn) reactionFireBtn.disabled = isAdminMode;
+  if (reactionWowBtn) reactionWowBtn.disabled = isAdminMode;
   if (reactionHintEl) {
-    reactionHintEl.textContent = isAuthed
-      ? `Авторизован как ${state.authUser.nickname || state.authUser.email}.`
-      : "Войди в аккаунт, чтобы оставлять реакции и комментарии.";
+    if (isAdminMode) {
+      reactionHintEl.textContent = "Режим администратора: можно просматривать табулатуру и удалять комментарии.";
+    } else if (isAuthed) {
+      reactionHintEl.textContent = `Авторизован как ${state.authUser.nickname || state.authUser.email}.`;
+    } else {
+      reactionHintEl.textContent = "Войди в аккаунт, чтобы оставлять реакции и комментарии.";
+    }
   }
+}
+
+function applyBackLink() {
+  if (!backLinkEl) return;
+  backLinkEl.setAttribute("href", state.adminViewEnabled ? "/admin/console" : "/");
 }
 
 async function loadCommunityTablature() {
   if (!state.tablatureId) return;
-  const payload = await api.fetchCommunityTablatureById(state.tablatureId);
+  const payload = state.adminViewEnabled
+    ? await api.fetchAdminTablatureById(state.authToken, state.tablatureId)
+    : await api.fetchCommunityTablatureById(state.tablatureId);
   const tablature = payload.tablature || {};
-  metaEl.textContent = `#${tablature.id} • Автор: ${tablature.author || "unknown"} • Создано: ${formatCreatedAt(tablature.created_at)}`;
+  const visibilityText = state.adminViewEnabled ? ` • Видимость: ${tablature.visibility || "private"}` : "";
+  metaEl.textContent =
+    `#${tablature.id} • Автор: ${tablature.author || "unknown"} • Создано: ${formatCreatedAt(tablature.created_at)}` +
+    visibilityText;
   const tabData = asTabData(tablature.json_format);
   tabEl.textContent = formatAsciiTablature(tabData);
 }
 
 async function loadComments() {
   if (!state.tablatureId) return;
-  const payload = await api.fetchCommunityTablatureComments(state.tablatureId, { limit: 150, offset: 0 });
+  const payload = state.adminViewEnabled
+    ? await api.fetchAdminTablatureComments(state.authToken, state.tablatureId, { limit: 150, offset: 0 })
+    : await api.fetchCommunityTablatureComments(state.tablatureId, { limit: 150, offset: 0 });
   const items = Array.isArray(payload.items) ? payload.items : [];
   renderComments(items);
 }
 
 async function loadReactions() {
   if (!state.tablatureId) return;
+  if (state.adminViewEnabled) {
+    state.currentReaction = null;
+    updateReactionButtons({}, null);
+    return;
+  }
   const payload = await api.fetchCommunityTablatureReactions(state.tablatureId, state.authToken || "");
   const reactions = payload.reactions || {};
   state.currentReaction = reactions.my_reaction || null;
@@ -190,9 +247,14 @@ async function initAuth() {
     state.authToken = "";
     state.authUser = null;
   }
+  updateAdminMode();
 }
 
 async function onReactionClick(reactionType) {
+  if (state.adminViewEnabled) {
+    setStatus("В режиме администратора реакции отключены.");
+    return;
+  }
   if (!state.authToken || !state.authUser) {
     setStatus("Нужно авторизоваться, чтобы оставить реакцию.");
     return;
@@ -211,6 +273,10 @@ async function onReactionClick(reactionType) {
 }
 
 async function onSubmitComment() {
+  if (state.adminViewEnabled) {
+    setStatus("В режиме администратора комментарии не добавляются.");
+    return;
+  }
   if (!state.authToken || !state.authUser) {
     setStatus("Нужно авторизоваться, чтобы оставить комментарий.");
     return;
@@ -235,6 +301,22 @@ async function onSubmitComment() {
   }
 }
 
+async function onDeleteComment(commentId) {
+  if (!state.adminViewEnabled || !state.authToken || !state.tablatureId) {
+    setStatus("Удаление комментария доступно только администратору.");
+    return;
+  }
+  if (!window.confirm("Удалить комментарий?")) return;
+
+  try {
+    await api.deleteAdminTablatureComment(state.authToken, state.tablatureId, commentId);
+    await loadComments();
+    setStatus("Комментарий удален.");
+  } catch (error) {
+    setStatus(`Ошибка удаления комментария: ${getErrorMessage(error)}`);
+  }
+}
+
 if (reactionLikeBtn) {
   reactionLikeBtn.addEventListener("click", () => onReactionClick("like"));
 }
@@ -247,6 +329,17 @@ if (reactionWowBtn) {
 if (commentSubmitBtn) {
   commentSubmitBtn.addEventListener("click", () => onSubmitComment());
 }
+if (commentsListEl) {
+  commentsListEl.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    const button = target.closest("[data-delete-comment-id]");
+    if (!button) return;
+    const commentId = Number(button.getAttribute("data-delete-comment-id"));
+    if (!Number.isFinite(commentId)) return;
+    onDeleteComment(commentId);
+  });
+}
 
 async function init() {
   state.tablatureId = getTablatureIdFromPath();
@@ -256,12 +349,21 @@ async function init() {
     return;
   }
 
+  const params = new URLSearchParams(window.location.search || "");
+  state.adminViewRequested = String(params.get("admin") || "").toLowerCase() === "1";
+
   await initAuth();
+  updateAdminMode();
+  applyBackLink();
   applyAuthUI();
 
   try {
     await refreshAll();
-    setStatus("Готово.");
+    if (state.adminViewRequested && !state.adminViewEnabled) {
+      setStatus("Режим администратора недоступен. Показан публичный просмотр.");
+    } else {
+      setStatus("Готово.");
+    }
   } catch (error) {
     metaEl.textContent = "Ошибка загрузки.";
     tabEl.textContent = getErrorMessage(error);

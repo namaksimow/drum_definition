@@ -1,4 +1,4 @@
-import * as api from "../services/api.js?v=17";
+import * as api from "../services/api.js?v=22";
 import { initTopAuthWidget } from "../services/top_auth_widget.js?v=8";
 
 const subtitleEl = document.getElementById("subtitle");
@@ -6,6 +6,9 @@ const statusEl = document.getElementById("status");
 const requestsListEl = document.getElementById("requestsList");
 const statusFilterEl = document.getElementById("statusFilter");
 const refreshBtn = document.getElementById("refreshBtn");
+const adminTablaturesListEl = document.getElementById("adminTablaturesList");
+const adminCoursesListEl = document.getElementById("adminCoursesList");
+const adminUsersListEl = document.getElementById("adminUsersList");
 
 const requestDetailPanelEl = document.getElementById("requestDetailPanel");
 const requestDetailContentEl = document.getElementById("requestDetailContent");
@@ -14,11 +17,26 @@ const requestDetailMessageEl = document.getElementById("requestDetailMessage");
 const rejectMessageInput = document.getElementById("rejectMessageInput");
 const approveRequestBtn = document.getElementById("approveRequestBtn");
 const rejectRequestBtn = document.getElementById("rejectRequestBtn");
+const userDetailPanelEl = document.getElementById("userDetailPanel");
+const userDetailContentEl = document.getElementById("userDetailContent");
+const userDetailMetaEl = document.getElementById("userDetailMeta");
+const userEditEmailInput = document.getElementById("userEditEmailInput");
+const userEditNicknameInput = document.getElementById("userEditNicknameInput");
+const userEditRoleSelect = document.getElementById("userEditRoleSelect");
+const saveUserBtn = document.getElementById("saveUserBtn");
+const deleteUserBtn = document.getElementById("deleteUserBtn");
+const userModalBackdrop = document.getElementById("userModalBackdrop");
+const closeUserModalBtn = document.getElementById("closeUserModalBtn");
 
 let authToken = "";
 let authUser = null;
 let requests = [];
 let selectedRequestId = null;
+let adminTablatures = [];
+let adminCourses = [];
+let adminUsers = [];
+let selectedAdminUserId = null;
+const visibilityUpdatesInFlight = new Set();
 
 function setStatus(message) {
   if (statusEl) statusEl.textContent = message;
@@ -58,8 +76,22 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
+function normalizeVisibility(value) {
+  return String(value || "").trim().toLowerCase() === "public" ? "public" : "private";
+}
+
+function getToggledVisibility(value) {
+  return normalizeVisibility(value) === "public" ? "private" : "public";
+}
+
+function normalizeAdminUserRole(value) {
+  return String(value || "").trim().toLowerCase() === "author" ? "author" : "user";
+}
+
 function isAdmin() {
-  return Boolean(authUser && String(authUser.role || "").toLowerCase() === "admin");
+  const role = String(authUser?.role || "").toLowerCase();
+  const email = String(authUser?.email || "").toLowerCase();
+  return role === "admin" || email === "admin@mail.ru";
 }
 
 function setDetailVisible(visible) {
@@ -71,8 +103,18 @@ function setDetailVisible(visible) {
   }
 }
 
+function setUserDetailVisible(visible) {
+  if (userDetailPanelEl) {
+    userDetailPanelEl.classList.toggle("is-hidden", !visible);
+  }
+}
+
 function findRequestById(requestId) {
   return requests.find((item) => String(item.id) === String(requestId)) || null;
+}
+
+function findAdminUserById(userId) {
+  return adminUsers.find((item) => String(item.id) === String(userId)) || null;
 }
 
 function renderRequestsList() {
@@ -104,6 +146,147 @@ function renderRequestsList() {
     .join("");
 }
 
+function renderAdminTablatures() {
+  if (!adminTablaturesListEl) return;
+  if (!adminTablatures.length) {
+    adminTablaturesListEl.innerHTML = `
+      <article class="card">
+        <h3 class="card__title">Табулатуры не найдены</h3>
+        <p class="card__meta">Список пуст по текущему фильтру.</p>
+      </article>
+    `;
+    return;
+  }
+
+  adminTablaturesListEl.innerHTML = adminTablatures
+    .map((item) => {
+      const comments = Number(item.comments_count || 0);
+      const likes = Number(item.reactions_like_count || 0);
+      const fire = Number(item.reactions_fire_count || 0);
+      const wow = Number(item.reactions_wow_count || 0);
+      const visibility = normalizeVisibility(item.visibility);
+      return `
+        <article class="card" data-tablature-id="${item.id}">
+          <h3 class="card__title">#${item.id} • ${escapeHtml(item.track_file_name || "Без названия")}</h3>
+          <p class="card__meta">Автор: ${escapeHtml(item.author || "unknown")} • Создано: ${formatDateTime(item.created_at)}</p>
+          <button
+            class="card__badge card__badge--action"
+            type="button"
+            data-toggle-visibility-type="tablature"
+            data-toggle-visibility-id="${item.id}"
+            data-current-visibility="${visibility}"
+            title="Нажми, чтобы переключить видимость"
+          >
+            Видимость: ${visibility}
+          </button>
+          <p class="card__social">Комментарии: ${comments} • Like: ${likes} • Fire: ${fire} • Wow: ${wow}</p>
+          <div class="card__actions">
+            <button class="btn btn--secondary" type="button" data-open-tablature-id="${item.id}">Просмотр</button>
+            <button class="btn btn--secondary card__delete-btn" type="button" data-delete-tablature-id="${item.id}">Удалить</button>
+          </div>
+        </article>
+      `;
+    })
+    .join("");
+}
+
+function renderAdminCourses() {
+  if (!adminCoursesListEl) return;
+  if (!adminCourses.length) {
+    adminCoursesListEl.innerHTML = `
+      <article class="card">
+        <h3 class="card__title">Курсы не найдены</h3>
+        <p class="card__meta">Список пуст по текущему фильтру.</p>
+      </article>
+    `;
+    return;
+  }
+
+  adminCoursesListEl.innerHTML = adminCourses
+    .map((item) => {
+      const tags = Array.isArray(item.tags) ? item.tags.map((tag) => escapeHtml(tag)).join(", ") : "";
+      const safeTags = tags || "без тегов";
+      const visibility = normalizeVisibility(item.visibility);
+      const cover = typeof item.cover_image_path === "string" && item.cover_image_path.trim()
+        ? `<img class="card__cover" src="${escapeHtml(item.cover_image_path)}" alt="Обложка курса" loading="lazy" />`
+        : "";
+      return `
+        <article class="card" data-course-id="${item.id}">
+          ${cover}
+          <h3 class="card__title">#${item.id} • ${escapeHtml(item.title || "Без названия")}</h3>
+          <p class="card__meta">Автор: ${escapeHtml(item.author || "unknown")} • Создано: ${formatDateTime(item.created_at)} • Обновлено: ${formatDateTime(item.updated_at)}</p>
+          <button
+            class="card__badge card__badge--action"
+            type="button"
+            data-toggle-visibility-type="course"
+            data-toggle-visibility-id="${item.id}"
+            data-current-visibility="${visibility}"
+            title="Нажми, чтобы переключить видимость"
+          >
+            Видимость: ${visibility}
+          </button>
+          <p class="card__text">${escapeHtml(item.description || "Описание не заполнено.")}</p>
+          <p class="card__meta">Теги: ${safeTags}</p>
+          <div class="card__actions">
+            <button class="btn btn--secondary" type="button" data-open-course-id="${item.id}">Просмотр</button>
+            <button class="btn btn--secondary card__delete-btn" type="button" data-delete-course-id="${item.id}">Удалить</button>
+          </div>
+        </article>
+      `;
+    })
+    .join("");
+}
+
+function renderAdminUsers() {
+  if (!adminUsersListEl) return;
+  if (!adminUsers.length) {
+    adminUsersListEl.innerHTML = `
+      <article class="card">
+        <h3 class="card__title">Пользователи не найдены</h3>
+        <p class="card__meta">Список пуст по текущему фильтру.</p>
+      </article>
+    `;
+    return;
+  }
+
+  adminUsersListEl.innerHTML = adminUsers
+    .map((item) => {
+      const selected = String(item.id) === String(selectedAdminUserId);
+      const role = normalizeAdminUserRole(item.role);
+      return `
+        <article class="card ${selected ? "card--selected" : ""}" data-admin-user-id="${item.id}">
+          <h3 class="card__title">#${item.id} • ${escapeHtml(item.nickname || "-")}</h3>
+          <p class="card__meta">Email: ${escapeHtml(item.email || "-")}</p>
+          <p class="card__meta">Роль: ${escapeHtml(role)}</p>
+        </article>
+      `;
+    })
+    .join("");
+}
+
+function renderUserDetails() {
+  const selected = selectedAdminUserId ? findAdminUserById(selectedAdminUserId) : null;
+  if (!selected) {
+    setUserDetailVisible(false);
+    return;
+  }
+
+  setUserDetailVisible(true);
+  const role = normalizeAdminUserRole(selected.role);
+  if (userDetailMetaEl) {
+    userDetailMetaEl.textContent = `Пользователь #${selected.id} • Текущая роль: ${role}`;
+  }
+  if (userEditEmailInput) {
+    userEditEmailInput.value = String(selected.email || "");
+  }
+  if (userEditNicknameInput) {
+    userEditNicknameInput.value = String(selected.nickname || "");
+  }
+  if (userEditRoleSelect) {
+    userEditRoleSelect.value = role;
+  }
+}
+
 function renderRequestDetails() {
   const selected = selectedRequestId ? findRequestById(selectedRequestId) : null;
   if (!selected) {
@@ -123,6 +306,102 @@ function renderRequestDetails() {
   }
   if (rejectMessageInput) {
     rejectMessageInput.value = String(selected.admin_message || "");
+  }
+}
+
+async function toggleAdminTablatureVisibility(tablatureId, currentVisibility) {
+  if (!authToken || !isAdmin()) return;
+  const normalizedId = Number(tablatureId);
+  if (!Number.isFinite(normalizedId)) return;
+  const updateKey = `tablature:${normalizedId}`;
+  if (visibilityUpdatesInFlight.has(updateKey)) return;
+
+  const nextVisibility = getToggledVisibility(currentVisibility);
+  visibilityUpdatesInFlight.add(updateKey);
+  try {
+    const payload = await api.updateAdminTablatureVisibility(authToken, normalizedId, nextVisibility);
+    const updated = payload && typeof payload.tablature === "object" ? payload.tablature : null;
+    const resolvedVisibility = normalizeVisibility(updated?.visibility || nextVisibility);
+    adminTablatures = adminTablatures.map((item) => {
+      if (Number(item.id) !== normalizedId) return item;
+      return {
+        ...item,
+        visibility: resolvedVisibility,
+        updated_at: updated?.updated_at || item.updated_at,
+      };
+    });
+    renderAdminTablatures();
+    setStatus(`Видимость табулатуры #${normalizedId}: ${resolvedVisibility}`);
+  } catch (error) {
+    setStatus(`Ошибка изменения видимости табулатуры: ${getErrorMessage(error)}`);
+  } finally {
+    visibilityUpdatesInFlight.delete(updateKey);
+  }
+}
+
+async function toggleAdminCourseVisibility(courseId, currentVisibility) {
+  if (!authToken || !isAdmin()) return;
+  const normalizedId = Number(courseId);
+  if (!Number.isFinite(normalizedId)) return;
+  const updateKey = `course:${normalizedId}`;
+  if (visibilityUpdatesInFlight.has(updateKey)) return;
+
+  const nextVisibility = getToggledVisibility(currentVisibility);
+  visibilityUpdatesInFlight.add(updateKey);
+  try {
+    const payload = await api.updateAdminCourseVisibility(authToken, normalizedId, nextVisibility);
+    const updated = payload && typeof payload.course === "object" ? payload.course : null;
+    const resolvedVisibility = normalizeVisibility(updated?.visibility || nextVisibility);
+    adminCourses = adminCourses.map((item) => {
+      if (Number(item.id) !== normalizedId) return item;
+      return {
+        ...item,
+        visibility: resolvedVisibility,
+        updated_at: updated?.updated_at || item.updated_at,
+      };
+    });
+    renderAdminCourses();
+    setStatus(`Видимость курса #${normalizedId}: ${resolvedVisibility}`);
+  } catch (error) {
+    setStatus(`Ошибка изменения видимости курса: ${getErrorMessage(error)}`);
+  } finally {
+    visibilityUpdatesInFlight.delete(updateKey);
+  }
+}
+
+async function deleteAdminTablatureById(tablatureId) {
+  if (!authToken || !isAdmin()) return;
+  const normalizedId = Number(tablatureId);
+  if (!Number.isFinite(normalizedId)) return;
+
+  const confirmation = window.confirm(`Удалить табулатуру #${normalizedId}?`);
+  if (!confirmation) return;
+
+  try {
+    await api.deleteAdminTablature(authToken, normalizedId);
+    adminTablatures = adminTablatures.filter((item) => Number(item.id) !== normalizedId);
+    renderAdminTablatures();
+    setStatus(`Табулатура #${normalizedId} удалена.`);
+  } catch (error) {
+    setStatus(`Ошибка удаления табулатуры: ${getErrorMessage(error)}`);
+  }
+}
+
+async function deleteAdminCourseById(courseId) {
+  if (!authToken || !isAdmin()) return;
+  const normalizedId = Number(courseId);
+  if (!Number.isFinite(normalizedId)) return;
+
+  const confirmation = window.confirm(`Удалить курс #${normalizedId}?`);
+  if (!confirmation) return;
+
+  try {
+    await api.deleteAdminCourse(authToken, normalizedId);
+    adminCourses = adminCourses.filter((item) => Number(item.id) !== normalizedId);
+    renderAdminCourses();
+    setStatus(`Курс #${normalizedId} удален.`);
+  } catch (error) {
+    setStatus(`Ошибка удаления курса: ${getErrorMessage(error)}`);
   }
 }
 
@@ -165,9 +444,91 @@ async function loadRequests() {
   }
 }
 
+async function loadAdminContent() {
+  if (!authToken || !isAdmin()) {
+    adminTablatures = [];
+    adminCourses = [];
+    if (adminTablaturesListEl) {
+      adminTablaturesListEl.innerHTML = `
+        <article class="card">
+          <h3 class="card__title">Доступ ограничен</h3>
+          <p class="card__meta">Только администратор может просматривать этот раздел.</p>
+        </article>
+      `;
+    }
+    if (adminCoursesListEl) {
+      adminCoursesListEl.innerHTML = `
+        <article class="card">
+          <h3 class="card__title">Доступ ограничен</h3>
+          <p class="card__meta">Только администратор может просматривать этот раздел.</p>
+        </article>
+      `;
+    }
+    return;
+  }
+
+  try {
+    const [tabPayload, coursePayload] = await Promise.all([
+      api.fetchAdminTablatures(authToken, "", { limit: 500, offset: 0 }),
+      api.fetchAdminCourses(authToken, "", { limit: 500, offset: 0 }),
+    ]);
+    adminTablatures = Array.isArray(tabPayload.items) ? tabPayload.items : [];
+    adminCourses = Array.isArray(coursePayload.items) ? coursePayload.items : [];
+    renderAdminTablatures();
+    renderAdminCourses();
+  } catch (error) {
+    adminTablatures = [];
+    adminCourses = [];
+    renderAdminTablatures();
+    renderAdminCourses();
+    setStatus(`Ошибка загрузки контента: ${getErrorMessage(error)}`);
+  }
+}
+
+async function loadAdminUsers() {
+  if (!authToken || !isAdmin()) {
+    adminUsers = [];
+    selectedAdminUserId = null;
+    setUserDetailVisible(false);
+    if (adminUsersListEl) {
+      adminUsersListEl.innerHTML = `
+        <article class="card">
+          <h3 class="card__title">Доступ ограничен</h3>
+          <p class="card__meta">Только администратор может просматривать этот раздел.</p>
+        </article>
+      `;
+    }
+    return;
+  }
+
+  try {
+    const payload = await api.fetchAdminUsers(authToken, {
+      role: "all",
+      limit: 500,
+      offset: 0,
+    });
+    adminUsers = Array.isArray(payload.items) ? payload.items : [];
+    if (!adminUsers.length) {
+      selectedAdminUserId = null;
+    } else if (!findAdminUserById(selectedAdminUserId)) {
+      selectedAdminUserId = null;
+    }
+    renderAdminUsers();
+    renderUserDetails();
+  } catch (error) {
+    adminUsers = [];
+    selectedAdminUserId = null;
+    renderAdminUsers();
+    renderUserDetails();
+    setStatus(`Ошибка загрузки пользователей: ${getErrorMessage(error)}`);
+  }
+}
+
 if (refreshBtn) {
   refreshBtn.addEventListener("click", () => {
     loadRequests();
+    loadAdminContent();
+    loadAdminUsers();
   });
 }
 
@@ -188,6 +549,179 @@ if (requestsListEl) {
     selectedRequestId = requestId;
     renderRequestsList();
     renderRequestDetails();
+  });
+}
+
+if (adminTablaturesListEl) {
+  adminTablaturesListEl.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    const visibilityToggle = target.closest("[data-toggle-visibility-type='tablature']");
+    if (visibilityToggle) {
+      const tablatureId = Number(visibilityToggle.getAttribute("data-toggle-visibility-id"));
+      const currentVisibility = visibilityToggle.getAttribute("data-current-visibility") || "private";
+      if (!Number.isFinite(tablatureId)) return;
+      toggleAdminTablatureVisibility(tablatureId, currentVisibility);
+      return;
+    }
+    const deleteButton = target.closest("[data-delete-tablature-id]");
+    if (deleteButton) {
+      const tablatureId = deleteButton.getAttribute("data-delete-tablature-id");
+      if (!tablatureId) return;
+      deleteAdminTablatureById(tablatureId);
+      return;
+    }
+    const button = target.closest("[data-open-tablature-id]");
+    const card = target.closest(".card[data-tablature-id]");
+    const tablatureId = button
+      ? button.getAttribute("data-open-tablature-id")
+      : card?.getAttribute("data-tablature-id");
+    if (!tablatureId) return;
+    window.location.href = `/community/tablatures/${encodeURIComponent(tablatureId)}?admin=1`;
+  });
+}
+
+if (adminCoursesListEl) {
+  adminCoursesListEl.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    const visibilityToggle = target.closest("[data-toggle-visibility-type='course']");
+    if (visibilityToggle) {
+      const courseId = Number(visibilityToggle.getAttribute("data-toggle-visibility-id"));
+      const currentVisibility = visibilityToggle.getAttribute("data-current-visibility") || "private";
+      if (!Number.isFinite(courseId)) return;
+      toggleAdminCourseVisibility(courseId, currentVisibility);
+      return;
+    }
+    const deleteButton = target.closest("[data-delete-course-id]");
+    if (deleteButton) {
+      const courseId = deleteButton.getAttribute("data-delete-course-id");
+      if (!courseId) return;
+      deleteAdminCourseById(courseId);
+      return;
+    }
+    const button = target.closest("[data-open-course-id]");
+    const card = target.closest(".card[data-course-id]");
+    const courseId = button
+      ? button.getAttribute("data-open-course-id")
+      : card?.getAttribute("data-course-id");
+    if (!courseId) return;
+    window.location.href = `/courses/${encodeURIComponent(courseId)}?admin=1`;
+  });
+}
+
+if (adminUsersListEl) {
+  adminUsersListEl.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    const card = target.closest(".card[data-admin-user-id]");
+    if (!card) return;
+    const userId = card.getAttribute("data-admin-user-id");
+    if (!userId) return;
+    selectedAdminUserId = userId;
+    renderAdminUsers();
+    renderUserDetails();
+  });
+}
+
+if (userModalBackdrop) {
+  userModalBackdrop.addEventListener("click", () => {
+    setUserDetailVisible(false);
+  });
+}
+
+if (closeUserModalBtn) {
+  closeUserModalBtn.addEventListener("click", () => {
+    setUserDetailVisible(false);
+  });
+}
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    setUserDetailVisible(false);
+  }
+});
+
+if (saveUserBtn) {
+  saveUserBtn.addEventListener("click", async () => {
+    if (!authToken || !isAdmin()) return;
+    const selected = selectedAdminUserId ? findAdminUserById(selectedAdminUserId) : null;
+    if (!selected) {
+      setStatus("Сначала выбери пользователя.");
+      return;
+    }
+
+    const email = userEditEmailInput ? userEditEmailInput.value.trim() : "";
+    const nickname = userEditNicknameInput ? userEditNicknameInput.value.trim() : "";
+    const role = userEditRoleSelect ? userEditRoleSelect.value : "user";
+    if (!email || !nickname) {
+      setStatus("Email и никнейм обязательны.");
+      return;
+    }
+
+    try {
+      saveUserBtn.disabled = true;
+      const payload = await api.updateAdminUserAccount(authToken, selected.id, {
+        email,
+        nickname,
+        role,
+      });
+      const updated = payload && typeof payload.user === "object" ? payload.user : null;
+      const updatedRole = normalizeAdminUserRole(updated?.role || role);
+      adminUsers = adminUsers.map((item) => {
+        if (Number(item.id) !== Number(selected.id)) return item;
+        return {
+          ...item,
+          email: String(updated?.email || email),
+          nickname: String(updated?.nickname || nickname),
+          role: updatedRole,
+        };
+      });
+      selectedAdminUserId = null;
+      renderAdminUsers();
+      renderUserDetails();
+      setStatus(`Аккаунт пользователя #${selected.id} обновлен.`);
+    } catch (error) {
+      setStatus(`Ошибка обновления пользователя: ${getErrorMessage(error)}`);
+    } finally {
+      saveUserBtn.disabled = false;
+    }
+  });
+}
+
+if (deleteUserBtn) {
+  deleteUserBtn.addEventListener("click", async () => {
+    if (!authToken || !isAdmin()) return;
+    const selected = selectedAdminUserId ? findAdminUserById(selectedAdminUserId) : null;
+    if (!selected) {
+      setStatus("Сначала выбери пользователя.");
+      return;
+    }
+
+    const confirmation = window.confirm(
+      `Удалить пользователя #${selected.id} (${selected.nickname || selected.email || "unknown"})? ` +
+      "Будут удалены его табулатуры и курсы."
+    );
+    if (!confirmation) {
+      return;
+    }
+
+    try {
+      deleteUserBtn.disabled = true;
+      if (saveUserBtn) saveUserBtn.disabled = true;
+      await api.deleteAdminUser(authToken, selected.id);
+      adminUsers = adminUsers.filter((item) => Number(item.id) !== Number(selected.id));
+      selectedAdminUserId = null;
+      renderAdminUsers();
+      renderUserDetails();
+      setStatus(`Пользователь #${selected.id} удален вместе с его контентом.`);
+      await loadAdminContent();
+    } catch (error) {
+      setStatus(`Ошибка удаления пользователя: ${getErrorMessage(error)}`);
+    } finally {
+      deleteUserBtn.disabled = false;
+      if (saveUserBtn) saveUserBtn.disabled = false;
+    }
   });
 }
 
@@ -248,6 +782,8 @@ async function init() {
       authToken = token || "";
       authUser = user || null;
       await loadRequests();
+      await loadAdminContent();
+      await loadAdminUsers();
     },
   });
 }

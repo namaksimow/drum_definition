@@ -126,6 +126,499 @@ class AsyncSqlAlchemyDatabaseGateway(DatabaseGateway):
             items.append(item)
         return items
 
+    async def list_admin_tablatures(self, *, query: str | None, limit: int, offset: int) -> list[dict]:
+        base_sql = """
+            SELECT
+                t.id,
+                t.task_id,
+                t.created_at,
+                t.updated_at,
+                t.result_path,
+                COALESCE(NULLIF(v.title, ''), 'private') AS visibility,
+                COALESCE(NULLIF(u.nickname, ''), u.email, 'unknown') AS author,
+                tr.file_name AS track_file_name,
+                tr.file_path AS track_file_path,
+                COALESCE(cc.comments_count, 0) AS comments_count,
+                COALESCE(rc.reactions_like_count, 0) AS reactions_like_count,
+                COALESCE(rc.reactions_fire_count, 0) AS reactions_fire_count,
+                COALESCE(rc.reactions_wow_count, 0) AS reactions_wow_count
+            FROM tablatures t
+            JOIN task ta ON ta.id = t.task_id
+            JOIN tracks tr ON tr.id = ta.track_id
+            LEFT JOIN users u ON u.id = tr.user_id
+            LEFT JOIN visibilities v ON v.id = t.visibility_id
+            LEFT JOIN (
+                SELECT
+                    tablature_id,
+                    COUNT(*)::int AS comments_count
+                FROM tablature_comments
+                GROUP BY tablature_id
+            ) cc ON cc.tablature_id = t.id
+            LEFT JOIN (
+                SELECT
+                    tablature_id,
+                    COUNT(*) FILTER (WHERE lower(reaction_type) = 'like')::int AS reactions_like_count,
+                    COUNT(*) FILTER (WHERE lower(reaction_type) = 'fire')::int AS reactions_fire_count,
+                    COUNT(*) FILTER (WHERE lower(reaction_type) = 'wow')::int AS reactions_wow_count
+                FROM tablature_reactions
+                GROUP BY tablature_id
+            ) rc ON rc.tablature_id = t.id
+            WHERE 1 = 1
+        """
+        params: dict[str, object] = {"limit": int(limit), "offset": int(offset)}
+        if query:
+            base_sql += """
+                AND (
+                    tr.file_name ILIKE :pattern
+                    OR CAST(t.id AS TEXT) ILIKE :pattern
+                    OR COALESCE(NULLIF(u.nickname, ''), u.email, '') ILIKE :pattern
+                    OR COALESCE(NULLIF(v.title, ''), 'private') ILIKE :pattern
+                )
+            """
+            params["pattern"] = f"%{query.strip()}%"
+        base_sql += " ORDER BY t.id DESC LIMIT :limit OFFSET :offset"
+
+        async with self.engine.connect() as conn:
+            rows = (await conn.execute(text(base_sql), params)).mappings().all()
+        return [dict(row) for row in rows]
+
+    async def list_admin_courses(self, *, query: str | None, limit: int, offset: int) -> list[dict]:
+        base_sql = """
+            SELECT
+                c.id,
+                c.title,
+                c.description,
+                c.cover_image_path,
+                c.created_at,
+                c.updated_at,
+                COALESCE(c.tags, ARRAY[]::text[]) AS tags,
+                COALESCE(NULLIF(v.title, ''), 'private') AS visibility,
+                COALESCE(NULLIF(u.nickname, ''), u.email, 'unknown') AS author
+            FROM course c
+            JOIN visibilities v ON v.id = c.visibility_id
+            JOIN users u ON u.id = c.user_id
+            WHERE 1 = 1
+        """
+        params: dict[str, object] = {"limit": int(limit), "offset": int(offset)}
+        if query:
+            base_sql += """
+                AND (
+                    c.title ILIKE :pattern
+                    OR COALESCE(c.description, '') ILIKE :pattern
+                    OR CAST(c.id AS TEXT) ILIKE :pattern
+                    OR COALESCE(NULLIF(u.nickname, ''), u.email, '') ILIKE :pattern
+                    OR COALESCE(NULLIF(v.title, ''), 'private') ILIKE :pattern
+                    OR EXISTS (
+                        SELECT 1
+                        FROM unnest(COALESCE(c.tags, ARRAY[]::text[])) AS tag
+                        WHERE tag ILIKE :pattern
+                    )
+                )
+            """
+            params["pattern"] = f"%{query.strip()}%"
+        base_sql += " ORDER BY c.id DESC LIMIT :limit OFFSET :offset"
+
+        async with self.engine.connect() as conn:
+            rows = (await conn.execute(text(base_sql), params)).mappings().all()
+
+        result: list[dict] = []
+        for row in rows:
+            item = dict(row)
+            tags = item.get("tags")
+            if isinstance(tags, list):
+                item["tags"] = [str(tag) for tag in tags]
+            else:
+                item["tags"] = []
+            result.append(item)
+        return result
+
+    async def get_admin_tablature(self, *, tablature_id: int) -> dict | None:
+        sql = """
+            SELECT
+                t.id,
+                t.task_id,
+                t.created_at,
+                t.updated_at,
+                t.result_path,
+                t.json_format,
+                COALESCE(NULLIF(v.title, ''), 'private') AS visibility,
+                COALESCE(NULLIF(u.nickname, ''), u.email, 'unknown') AS author,
+                tr.file_name AS track_file_name,
+                tr.file_path AS track_file_path
+            FROM tablatures t
+            JOIN task ta ON ta.id = t.task_id
+            JOIN tracks tr ON tr.id = ta.track_id
+            LEFT JOIN users u ON u.id = tr.user_id
+            LEFT JOIN visibilities v ON v.id = t.visibility_id
+            WHERE t.id = :tablature_id
+            LIMIT 1
+        """
+        async with self.engine.connect() as conn:
+            row = (await conn.execute(text(sql), {"tablature_id": int(tablature_id)})).mappings().first()
+        if row is None:
+            return None
+        return dict(row)
+
+    async def update_admin_tablature_visibility(
+        self,
+        *,
+        tablature_id: int,
+        visibility: str,
+    ) -> dict | None:
+        if not await self._tablature_exists(tablature_id=tablature_id):
+            return None
+
+        visibility_id = await self._get_or_create_visibility_id(visibility=visibility)
+        async with self.engine.begin() as conn:
+            await conn.execute(
+                text(
+                    """
+                    UPDATE tablatures
+                    SET visibility_id = :visibility_id,
+                        updated_at = now()
+                    WHERE id = :tablature_id
+                    """
+                ),
+                {
+                    "visibility_id": int(visibility_id),
+                    "tablature_id": int(tablature_id),
+                },
+            )
+        return await self.get_admin_tablature(tablature_id=int(tablature_id))
+
+    async def delete_admin_tablature(self, *, tablature_id: int) -> bool:
+        if not await self._tablature_exists(tablature_id=tablature_id):
+            return False
+        params = {"tablature_id": int(tablature_id)}
+        async with self.engine.begin() as conn:
+            await conn.execute(text("DELETE FROM tablature_comments WHERE tablature_id = :tablature_id"), params)
+            await conn.execute(text("DELETE FROM tablature_reactions WHERE tablature_id = :tablature_id"), params)
+            deleted_tablature_id = (
+                await conn.execute(
+                    text("DELETE FROM tablatures WHERE id = :tablature_id RETURNING id"),
+                    params,
+                )
+            ).scalar_one_or_none()
+        return deleted_tablature_id is not None
+
+    async def list_admin_tablature_comments(
+        self,
+        *,
+        tablature_id: int,
+        limit: int,
+        offset: int,
+    ) -> list[dict] | None:
+        if not await self._tablature_exists(tablature_id=tablature_id):
+            return None
+
+        sql = """
+            SELECT
+                c.id,
+                c.user_id,
+                c.tablature_id,
+                c.content,
+                c.created_at,
+                COALESCE(NULLIF(u.nickname, ''), u.email, 'unknown') AS author
+            FROM tablature_comments c
+            JOIN users u ON u.id = c.user_id
+            WHERE c.tablature_id = :tablature_id
+            ORDER BY c.created_at DESC, c.id DESC
+            LIMIT :limit OFFSET :offset
+        """
+        params = {
+            "tablature_id": int(tablature_id),
+            "limit": int(limit),
+            "offset": int(offset),
+        }
+        async with self.engine.connect() as conn:
+            rows = (await conn.execute(text(sql), params)).mappings().all()
+        return [dict(row) for row in rows]
+
+    async def delete_admin_tablature_comment(self, *, tablature_id: int, comment_id: int) -> bool:
+        sql = """
+            DELETE FROM tablature_comments
+            WHERE id = :comment_id AND tablature_id = :tablature_id
+            RETURNING id
+        """
+        params = {"comment_id": int(comment_id), "tablature_id": int(tablature_id)}
+        async with self.engine.begin() as conn:
+            row = (await conn.execute(text(sql), params)).scalar_one_or_none()
+        return row is not None
+
+    async def get_admin_course(self, *, course_id: int) -> dict | None:
+        sql = """
+            SELECT
+                c.id,
+                c.title,
+                c.description,
+                c.cover_image_path,
+                c.created_at,
+                c.updated_at,
+                COALESCE(c.tags, ARRAY[]::text[]) AS tags,
+                COALESCE(NULLIF(v.title, ''), 'private') AS visibility,
+                COALESCE(NULLIF(u.nickname, ''), u.email, 'unknown') AS author
+            FROM course c
+            JOIN visibilities v ON v.id = c.visibility_id
+            JOIN users u ON u.id = c.user_id
+            WHERE c.id = :course_id
+            LIMIT 1
+        """
+        async with self.engine.connect() as conn:
+            row = (await conn.execute(text(sql), {"course_id": int(course_id)})).mappings().first()
+        if row is None:
+            return None
+        item = dict(row)
+        if isinstance(item.get("tags"), list):
+            item["tags"] = [str(tag) for tag in item["tags"]]
+        else:
+            item["tags"] = []
+        return item
+
+    async def update_admin_course_visibility(
+        self,
+        *,
+        course_id: int,
+        visibility: str,
+    ) -> dict | None:
+        if not await self._course_exists(course_id=course_id):
+            return None
+
+        visibility_id = await self._get_or_create_visibility_id(visibility=visibility)
+        async with self.engine.begin() as conn:
+            await conn.execute(
+                text(
+                    """
+                    UPDATE course
+                    SET visibility_id = :visibility_id,
+                        updated_at = now()
+                    WHERE id = :course_id
+                    """
+                ),
+                {
+                    "visibility_id": int(visibility_id),
+                    "course_id": int(course_id),
+                },
+            )
+        return await self.get_admin_course(course_id=int(course_id))
+
+    async def delete_admin_course(self, *, course_id: int) -> bool:
+        sql = """
+            DELETE FROM course
+            WHERE id = :course_id
+            RETURNING id
+        """
+        params = {"course_id": int(course_id)}
+        async with self.engine.begin() as conn:
+            row = (await conn.execute(text(sql), params)).scalar_one_or_none()
+        return row is not None
+
+    async def list_admin_course_lessons(self, *, course_id: int) -> list[dict] | None:
+        if not await self._course_exists(course_id=course_id):
+            return None
+        return await self._list_course_lessons(course_id=course_id)
+
+    async def list_admin_users(
+        self,
+        *,
+        role: str | None,
+        query: str | None,
+        limit: int,
+        offset: int,
+    ) -> list[dict]:
+        base_sql = """
+            SELECT
+                u.id,
+                u.email,
+                u.nickname,
+                lower(r.role_title) AS role
+            FROM users u
+            JOIN roles r ON r.id = u.role_id
+            WHERE lower(r.role_title) IN ('user', 'author')
+        """
+        params: dict[str, object] = {
+            "limit": int(limit),
+            "offset": int(offset),
+        }
+        normalized_role = (role or "").strip().lower()
+        if normalized_role in {"user", "author"}:
+            base_sql += " AND lower(r.role_title) = :role"
+            params["role"] = normalized_role
+
+        if query:
+            base_sql += """
+                AND (
+                    u.email ILIKE :pattern
+                    OR u.nickname ILIKE :pattern
+                    OR CAST(u.id AS TEXT) ILIKE :pattern
+                    OR lower(r.role_title) ILIKE :pattern
+                )
+            """
+            params["pattern"] = f"%{query.strip()}%"
+
+        base_sql += " ORDER BY u.id DESC LIMIT :limit OFFSET :offset"
+        async with self.engine.connect() as conn:
+            rows = (await conn.execute(text(base_sql), params)).mappings().all()
+        return [dict(row) for row in rows]
+
+    async def update_admin_user_account(
+        self,
+        *,
+        user_id: int,
+        email: str | None = None,
+        nickname: str | None = None,
+        role: str | None = None,
+    ) -> dict | None:
+        existing_sql = """
+            SELECT
+                u.id,
+                u.email,
+                u.nickname,
+                lower(r.role_title) AS role
+            FROM users u
+            JOIN roles r ON r.id = u.role_id
+            WHERE u.id = :user_id
+            LIMIT 1
+        """
+        async with self.engine.connect() as conn:
+            existing_row = (await conn.execute(text(existing_sql), {"user_id": int(user_id)})).mappings().first()
+        if existing_row is None:
+            return None
+        existing = dict(existing_row)
+        existing_role = str(existing.get("role") or "").strip().lower()
+        if existing_role not in {"user", "author"}:
+            return None
+
+        updates: dict[str, object] = {}
+        if email is not None:
+            updates["email"] = email.strip().lower()
+        if nickname is not None:
+            updates["nickname"] = nickname.strip()
+        if role is not None:
+            role_id = await self._get_or_create_role_id(role_title=role.strip().lower())
+            updates["role_id"] = int(role_id)
+
+        if not updates:
+            return existing
+
+        set_clauses = []
+        params: dict[str, object] = {"user_id": int(user_id)}
+        for key, value in updates.items():
+            set_clauses.append(f"{key} = :{key}")
+            params[key] = value
+
+        update_sql = f"""
+            UPDATE users
+            SET {", ".join(set_clauses)}
+            WHERE id = :user_id
+        """
+        try:
+            async with self.engine.begin() as conn:
+                await conn.execute(text(update_sql), params)
+        except IntegrityError as exc:
+            raise ValueError("User with this email already exists") from exc
+
+        async with self.engine.connect() as conn:
+            updated_row = (await conn.execute(text(existing_sql), {"user_id": int(user_id)})).mappings().first()
+        if updated_row is None:
+            return None
+        updated = dict(updated_row)
+        updated_role = str(updated.get("role") or "").strip().lower()
+        if updated_role not in {"user", "author"}:
+            return None
+        return updated
+
+    async def delete_admin_user(self, *, user_id: int) -> bool:
+        existing_sql = """
+            SELECT lower(r.role_title) AS role
+            FROM users u
+            JOIN roles r ON r.id = u.role_id
+            WHERE u.id = :user_id
+            LIMIT 1
+        """
+        async with self.engine.connect() as conn:
+            existing_row = (await conn.execute(text(existing_sql), {"user_id": int(user_id)})).mappings().first()
+        if existing_row is None:
+            return False
+
+        existing_role = str(existing_row.get("role") or "").strip().lower()
+        if existing_role not in {"user", "author"}:
+            return False
+
+        params = {"user_id": int(user_id)}
+        async with self.engine.begin() as conn:
+            await conn.execute(text("DELETE FROM author_role_requests WHERE user_id = :user_id"), params)
+            await conn.execute(text("DELETE FROM user_lesson_progress WHERE user_id = :user_id"), params)
+            await conn.execute(text("DELETE FROM statistics WHERE user_id = :user_id"), params)
+            await conn.execute(text("DELETE FROM tablature_comments WHERE user_id = :user_id"), params)
+            await conn.execute(text("DELETE FROM tablature_reactions WHERE user_id = :user_id"), params)
+            await conn.execute(text("DELETE FROM course WHERE user_id = :user_id"), params)
+            await conn.execute(
+                text(
+                    """
+                    DELETE FROM tablature_comments
+                    WHERE tablature_id IN (
+                        SELECT t.id
+                        FROM tablatures t
+                        JOIN task ta ON ta.id = t.task_id
+                        JOIN tracks tr ON tr.id = ta.track_id
+                        WHERE tr.user_id = :user_id
+                    )
+                    """
+                ),
+                params,
+            )
+            await conn.execute(
+                text(
+                    """
+                    DELETE FROM tablature_reactions
+                    WHERE tablature_id IN (
+                        SELECT t.id
+                        FROM tablatures t
+                        JOIN task ta ON ta.id = t.task_id
+                        JOIN tracks tr ON tr.id = ta.track_id
+                        WHERE tr.user_id = :user_id
+                    )
+                    """
+                ),
+                params,
+            )
+            await conn.execute(
+                text(
+                    """
+                    DELETE FROM tablatures
+                    WHERE task_id IN (
+                        SELECT ta.id
+                        FROM task ta
+                        JOIN tracks tr ON tr.id = ta.track_id
+                        WHERE tr.user_id = :user_id
+                    )
+                    """
+                ),
+                params,
+            )
+            await conn.execute(
+                text(
+                    """
+                    DELETE FROM task
+                    WHERE track_id IN (
+                        SELECT tr.id
+                        FROM tracks tr
+                        WHERE tr.user_id = :user_id
+                    )
+                    """
+                ),
+                params,
+            )
+            await conn.execute(text("DELETE FROM tracks WHERE user_id = :user_id"), params)
+            deleted_user_id = (
+                await conn.execute(
+                    text("DELETE FROM users WHERE id = :user_id RETURNING id"),
+                    params,
+                )
+            ).scalar_one_or_none()
+
+        return deleted_user_id is not None
+
     async def get_public_tablature(self, *, tablature_id: int) -> dict | None:
         sql = """
             SELECT
@@ -371,6 +864,17 @@ class AsyncSqlAlchemyDatabaseGateway(DatabaseGateway):
             FROM course c
             JOIN visibilities v ON v.id = c.visibility_id
             WHERE c.id = :course_id AND lower(v.title) = 'public'
+            LIMIT 1
+        """
+        async with self.engine.connect() as conn:
+            row = await conn.execute(text(sql), {"course_id": int(course_id)})
+            return row.scalar_one_or_none() is not None
+
+    async def _course_exists(self, *, course_id: int) -> bool:
+        sql = """
+            SELECT 1
+            FROM course
+            WHERE id = :course_id
             LIMIT 1
         """
         async with self.engine.connect() as conn:
@@ -861,6 +1365,17 @@ class AsyncSqlAlchemyDatabaseGateway(DatabaseGateway):
             FROM tablatures t
             JOIN visibilities v ON v.id = t.visibility_id
             WHERE t.id = :tablature_id AND lower(v.title) = 'public'
+            LIMIT 1
+        """
+        async with self.engine.connect() as conn:
+            exists_row = await conn.execute(text(sql), {"tablature_id": int(tablature_id)})
+            return exists_row.scalar_one_or_none() is not None
+
+    async def _tablature_exists(self, *, tablature_id: int) -> bool:
+        sql = """
+            SELECT 1
+            FROM tablatures
+            WHERE id = :tablature_id
             LIMIT 1
         """
         async with self.engine.connect() as conn:

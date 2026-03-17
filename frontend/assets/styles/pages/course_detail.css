@@ -7,6 +7,14 @@
   align-items: start;
 }
 
+.course-detail-shell--admin {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.course-detail-shell--admin .menu {
+  display: none;
+}
+
 .menu {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -74,6 +82,16 @@
 
 .course-detail-page__intro {
   min-width: 0;
+}
+
+.course-detail-page__back {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.course-detail-page__back:hover {
+  text-decoration: underline;
 }
 
 .course-detail-page__kicker {

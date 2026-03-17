@@ -164,6 +164,10 @@
   white-space: pre-wrap;
 }
 
+.comment-item__actions {
+  margin-top: 8px;
+}
+
 .comment-form {
   margin-top: 8px;
   display: grid;

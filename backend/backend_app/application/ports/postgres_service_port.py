@@ -176,6 +176,133 @@ class PostgresServicePort(Protocol):
     ) -> tuple[int, dict | str]:
         ...
 
+    async def list_admin_tablatures(
+        self,
+        *,
+        token: str,
+        query: str | None,
+        limit: int,
+        offset: int,
+    ) -> tuple[int, dict | str]:
+        ...
+
+    async def list_admin_courses(
+        self,
+        *,
+        token: str,
+        query: str | None,
+        limit: int,
+        offset: int,
+    ) -> tuple[int, dict | str]:
+        ...
+
+    async def get_admin_tablature(
+        self,
+        *,
+        token: str,
+        tablature_id: int,
+    ) -> tuple[int, dict | str]:
+        ...
+
+    async def update_admin_tablature_visibility(
+        self,
+        *,
+        token: str,
+        tablature_id: int,
+        visibility: str,
+    ) -> tuple[int, dict | str]:
+        ...
+
+    async def delete_admin_tablature(
+        self,
+        *,
+        token: str,
+        tablature_id: int,
+    ) -> tuple[int, dict | str]:
+        ...
+
+    async def list_admin_tablature_comments(
+        self,
+        *,
+        token: str,
+        tablature_id: int,
+        limit: int,
+        offset: int,
+    ) -> tuple[int, dict | str]:
+        ...
+
+    async def delete_admin_tablature_comment(
+        self,
+        *,
+        token: str,
+        tablature_id: int,
+        comment_id: int,
+    ) -> tuple[int, dict | str]:
+        ...
+
+    async def get_admin_course(
+        self,
+        *,
+        token: str,
+        course_id: int,
+    ) -> tuple[int, dict | str]:
+        ...
+
+    async def update_admin_course_visibility(
+        self,
+        *,
+        token: str,
+        course_id: int,
+        visibility: str,
+    ) -> tuple[int, dict | str]:
+        ...
+
+    async def delete_admin_course(
+        self,
+        *,
+        token: str,
+        course_id: int,
+    ) -> tuple[int, dict | str]:
+        ...
+
+    async def list_admin_course_lessons(
+        self,
+        *,
+        token: str,
+        course_id: int,
+    ) -> tuple[int, dict | str]:
+        ...
+
+    async def list_admin_users(
+        self,
+        *,
+        token: str,
+        role: str | None,
+        query: str | None,
+        limit: int,
+        offset: int,
+    ) -> tuple[int, dict | str]:
+        ...
+
+    async def update_admin_user_account(
+        self,
+        *,
+        token: str,
+        user_id: int,
+        email: str | None = None,
+        nickname: str | None = None,
+        role: str | None = None,
+    ) -> tuple[int, dict | str]:
+        ...
+
+    async def delete_admin_user(
+        self,
+        *,
+        token: str,
+        user_id: int,
+    ) -> tuple[int, dict | str]:
+        ...
+
     async def list_admin_author_role_requests(
         self,
         *,
