@@ -1,0 +1,2 @@
+"""rabbitmq_service package."""
+

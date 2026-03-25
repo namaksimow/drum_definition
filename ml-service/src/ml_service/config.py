@@ -22,6 +22,17 @@ class Settings:
     db_user_password_hash: str
     db_user_role_title: str
     tablature_visibility_id: int
+    minio_service_url: str | None
+    rabbitmq_service_url: str | None
+    rabbitmq_service_timeout_sec: float
+    run_worker_in_api: bool
+
+
+def _read_bool_env(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
 
 
 @lru_cache(maxsize=1)
@@ -29,6 +40,16 @@ def get_settings() -> Settings:
     service_root = Path(__file__).resolve().parents[2]
     repo_root = service_root.parent
     load_dotenv(service_root / ".env")
+
+    minio_service_url = os.getenv("MINIO_SERVICE_URL")
+
+    rabbitmq_service_url = os.getenv("RABBITMQ_SERVICE_URL")
+    rabbitmq_service_url = (
+        rabbitmq_service_url.strip()
+        if rabbitmq_service_url and rabbitmq_service_url.strip()
+        else None
+    )
+    run_worker_default = not bool(rabbitmq_service_url)
 
     return Settings(
         app_host=os.getenv("ML_SERVICE_HOST", "0.0.0.0"),
@@ -43,4 +64,8 @@ def get_settings() -> Settings:
         db_user_password_hash=os.getenv("ML_SERVICE_DB_USER_PASSWORD_HASH", "ml-service-placeholder-hash"),
         db_user_role_title=os.getenv("ML_SERVICE_DB_USER_ROLE_TITLE", "user"),
         tablature_visibility_id=int(os.getenv("ML_SERVICE_TAB_VISIBILITY_ID", "1")),
+        minio_service_url=minio_service_url.strip() if minio_service_url and minio_service_url.strip() else None,
+        rabbitmq_service_url=rabbitmq_service_url,
+        rabbitmq_service_timeout_sec=float(os.getenv("RABBITMQ_SERVICE_TIMEOUT_SEC", "10.0")),
+        run_worker_in_api=_read_bool_env("ML_SERVICE_RUN_WORKER_IN_API", run_worker_default),
     )

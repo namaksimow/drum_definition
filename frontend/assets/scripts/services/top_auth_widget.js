@@ -49,9 +49,19 @@ export async function initTopAuthWidget({ onAuthChanged } = {}) {
   const registerPasswordInput = document.getElementById("registerPassword");
   const registerBtn = document.getElementById("registerBtn");
 
+  let storedUser = null;
+  try {
+    const rawUser = localStorage.getItem(AUTH_USER_KEY);
+    if (rawUser) {
+      storedUser = JSON.parse(rawUser);
+    }
+  } catch {
+    storedUser = null;
+  }
+
   const state = {
     token: localStorage.getItem(AUTH_TOKEN_KEY) || "",
-    user: null,
+    user: storedUser,
   };
 
   const emitAuthChanged = async () => {
@@ -74,11 +84,11 @@ export async function initTopAuthWidget({ onAuthChanged } = {}) {
 
   const setButtonLabel = () => {
     if (!authEntryBtn) return;
-    if (!state.user) {
+    if (!state.user && !state.token) {
       authEntryBtn.textContent = "Вход";
       return;
     }
-    authEntryBtn.textContent = state.user.nickname || state.user.email || "Аккаунт";
+    authEntryBtn.textContent = state.user?.nickname || state.user?.email || "Аккаунт";
   };
 
   const persistAuthState = () => {
@@ -95,19 +105,17 @@ export async function initTopAuthWidget({ onAuthChanged } = {}) {
   };
 
   const renderAccountActionsPanel = () => {
-    if (!authPanel || !state.user) return;
+    if (!authPanel || !state.token) return;
+    authPanel.classList.add("top-auth__panel--account");
     const admin = isAdminUser(state.user);
     const openActionHtml = admin
       ? ""
-      : '<button class="btn btn--secondary" type="button" data-auth-action="open">Личный аккаунт</button>';
+      : '<button class="top-auth__menu-item" type="button" data-auth-action="open">Личный аккаунт</button>';
     authPanel.innerHTML = `
-      <article class="top-auth__card">
-        <h3 class="top-auth__title">Аккаунт</h3>
-        <div class="top-auth__actions">
-          ${openActionHtml}
-          <button class="btn btn--secondary" type="button" data-auth-action="logout">Выйти</button>
-        </div>
-      </article>
+      <div class="top-auth__account-menu">
+        ${openActionHtml}
+        <button class="top-auth__menu-item" type="button" data-auth-action="logout">Выйти</button>
+      </div>
     `;
 
     const openBtn = authPanel.querySelector('[data-auth-action="open"]');
@@ -132,7 +140,7 @@ export async function initTopAuthWidget({ onAuthChanged } = {}) {
   };
 
   const toggleAccountActionsPanel = () => {
-    if (!authPanel || !state.user) return;
+    if (!authPanel || !state.token) return;
     renderAccountActionsPanel();
     authPanel.classList.toggle("top-auth__panel--open");
   };
@@ -171,7 +179,7 @@ export async function initTopAuthWidget({ onAuthChanged } = {}) {
   if (authEntryBtn) {
     authEntryBtn.addEventListener("click", (event) => {
       event.preventDefault();
-      if (state.user) {
+      if (state.token) {
         toggleAccountActionsPanel();
         return;
       }
@@ -254,6 +262,7 @@ export async function initTopAuthWidget({ onAuthChanged } = {}) {
     closePanel();
   });
 
+  setButtonLabel();
   await verifyToken();
   redirectAfterAuthIfAdmin(state.user);
   return { ...state };

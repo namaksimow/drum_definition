@@ -1,5 +1,5 @@
 import * as api from "../services/api.js?v=9";
-import { initTopAuthWidget } from "../services/top_auth_widget.js?v=8";
+import { initTopAuthWidget } from "../services/top_auth_widget.js?v=12";
 
 const AUTH_TOKEN_KEY = "drum_auth_token";
 const statusEl = document.getElementById("status");
@@ -10,12 +10,13 @@ const createBtn = document.getElementById("createBtn");
 const saveBtn = document.getElementById("saveBtn");
 const pdfBtn = document.getElementById("pdfBtn");
 const jsonBtn = document.getElementById("jsonBtn");
-const jobIdText = document.getElementById("jobIdText");
+const trackNameText = document.getElementById("trackNameText");
 const jsonView = document.getElementById("jsonView");
 const progressOverlay = document.getElementById("progressOverlay");
 const progressFill = document.getElementById("progressFill");
 const progressPercent = document.getElementById("progressPercent");
 const progressText = document.getElementById("progressText");
+const INSTRUMENT_LABELS = { hihat: "хэт", snare: "малый", kick: "бочка" };
 
 let jobId = "";
 let authToken = "";
@@ -53,7 +54,7 @@ function setStatus(message) {
 }
 
 function getErrorMessage(error) {
-  if (!error) return "Unknown error";
+  if (!error) return "Неизвестная ошибка";
   const raw = typeof error.message === "string" ? error.message : String(error);
   try {
     const parsed = JSON.parse(raw);
@@ -78,9 +79,52 @@ function setBusy(isBusy) {
   if (jsonBtn) jsonBtn.disabled = isBusy;
 }
 
-function updateJobId(value) {
-  jobId = value || "";
-  if (jobIdText) jobIdText.textContent = jobId || "-";
+function updateJobInfo(idValue, fileNameValue) {
+  jobId = idValue || "";
+  if (trackNameText) trackNameText.textContent = fileNameValue || "-";
+}
+
+function asTabData(value) {
+  if (!value) return null;
+  if (typeof value === "object") return value;
+  if (typeof value === "string") {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function formatAsciiTablature(tabData) {
+  if (!tabData || !Array.isArray(tabData.lines) || !tabData.lines.length) {
+    return "Нет данных табулатуры";
+  }
+
+  const out = [];
+  tabData.lines.forEach((line) => {
+    const bars = Array.isArray(line.bars) ? line.bars : [];
+    const startSec = Number(line.start_sec);
+    const endSec = Number(line.end_sec);
+    const startSecText = Number.isFinite(startSec) ? `${startSec.toFixed(3)}s` : `${line.start_sec}s`;
+    const endSecText = Number.isFinite(endSec) ? `${endSec.toFixed(3)}s` : `${line.end_sec}s`;
+    out.push(`строка ${line.line_number} | такты ${line.first_bar}-${line.last_bar} | ${startSecText} - ${endSecText}`);
+
+    ["hihat", "snare", "kick"].forEach((instrument) => {
+      const row = bars
+        .map((bar) => {
+          const pattern = bar?.instruments?.[instrument]?.pattern || "";
+          return `|${pattern}|`;
+        })
+        .join("");
+      const label = INSTRUMENT_LABELS[instrument] || instrument;
+      out.push(`${label.padEnd(5, " ")}${row}`);
+    });
+    out.push("");
+  });
+
+  return out.join("\n").trimEnd();
 }
 
 function setProgress(value, message) {
@@ -190,7 +234,10 @@ if (fileInput) {
     if (!isMp3(file)) {
       setStatus("Выбран неверный файл. Разрешены только .mp3");
       fileInput.value = "";
+      if (trackNameText) trackNameText.textContent = "-";
+      return;
     }
+    if (trackNameText) trackNameText.textContent = file.name;
   });
 }
 
@@ -212,12 +259,12 @@ if (createBtn) {
       setStatus("Создание задачи...");
       const payload = await api.uploadAudio(file, authToken, tablatureName);
       const job = payload.job || {};
-      updateJobId(job.id ? String(job.id) : "");
+      updateJobInfo(job.id ? String(job.id) : "", file.name);
       if (!jobId) {
-        throw new Error("В ответе сервиса не найден job_id");
+        throw new Error("В ответе сервиса не найден идентификатор задачи");
       }
       await waitUntilJobFinished(jobId);
-      setStatus(`Табулатура успешно создана.\njob_id: ${jobId}\nstatus: done`);
+      setStatus("Табулатура успешно создана.\nСтатус: готово");
     } catch (error) {
       setStatus(`Ошибка создания:\n${getErrorMessage(error)}`);
     } finally {
@@ -231,7 +278,7 @@ if (createBtn) {
 if (saveBtn) {
   saveBtn.addEventListener("click", async () => {
     if (!jobId) {
-      setStatus("Сначала создай табулатуру, чтобы получить job_id.");
+      setStatus("Сначала создай табулатуру.");
       return;
     }
     if (!authToken) {
@@ -266,7 +313,8 @@ if (saveBtn) {
         trackFileName: newName || undefined,
         visibility: visibility || undefined,
       });
-      setStatus(`Табулатура #${row.id} сохранена. visibility=${visibility}`);
+      const visibilityLabel = visibility === "public" ? "публичная" : "приватная";
+      setStatus(`Табулатура #${row.id} сохранена. Видимость: ${visibilityLabel}.`);
     } catch (error) {
       const message = getErrorMessage(error);
       if (message.toLowerCase().includes("already exists")) {
@@ -297,9 +345,9 @@ if (pdfBtn) {
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
-      setStatus("PDF скачан.");
+      setStatus("ПДФ скачан.");
     } catch (error) {
-      setStatus(`Ошибка получения PDF:\n${getErrorMessage(error)}`);
+      setStatus(`Ошибка получения ПДФ:\n${getErrorMessage(error)}`);
     } finally {
       setBusy(false);
     }
@@ -315,10 +363,13 @@ if (jsonBtn) {
     try {
       setBusy(true);
       const payload = await api.fetchTablatureByJobId(jobId);
-      if (jsonView) jsonView.textContent = JSON.stringify(payload, null, 2);
-      setStatus("JSON загружен.");
+      if (jsonView) {
+        const tabData = asTabData(payload?.tablature);
+        jsonView.textContent = formatAsciiTablature(tabData);
+      }
+      setStatus("Табулатура загружена.");
     } catch (error) {
-      setStatus(`Ошибка получения JSON:\n${getErrorMessage(error)}`);
+      setStatus(`Ошибка получения табулатуры:\n${getErrorMessage(error)}`);
     } finally {
       setBusy(false);
     }

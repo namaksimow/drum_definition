@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Личный Аккаунт</title>
   <link rel="stylesheet" href="/assets/styles/base.css" />
-  <link rel="stylesheet" href="/assets/styles/components.css?v=5" />
+  <link rel="stylesheet" href="/assets/styles/components.css?v=6" />
   <link rel="stylesheet" href="/assets/styles/pages/account.css?v=4" />
 </head>
 <body>
@@ -19,12 +19,12 @@
     <section class="account-grid" id="accountContent">
       <article class="panel">
         <h2 class="panel__title">Профиль</h2>
-        <p class="panel__text"><strong>Email:</strong> <span id="profileEmail">-</span></p>
+        <p class="panel__text"><strong>Электронная почта:</strong> <span id="profileEmail">-</span></p>
         <p class="panel__text"><strong>Никнейм:</strong> <span id="profileNickname">-</span></p>
         <p class="panel__text"><strong>Роль:</strong> <span id="profileRole">-</span></p>
 
         <label class="field-label" for="nicknameInput">Изменить никнейм</label>
-        <input class="field-input" id="nicknameInput" type="text" placeholder="Новый nickname" />
+        <input class="field-input" id="nicknameInput" type="text" placeholder="Новый никнейм" />
         <div class="panel__actions">
           <button class="btn btn--primary" id="saveNicknameBtn" type="button">Сохранить</button>
           <button class="btn btn--secondary" id="logoutBtn" type="button">Выйти</button>
@@ -43,7 +43,7 @@
       <article class="panel">
         <h2 class="panel__title">Мои Табулатуры</h2>
         <div class="library-tools">
-          <input class="field-input library-tools__input" id="searchInput" type="text" placeholder="Поиск по названию или ID" />
+          <input class="field-input library-tools__input" id="searchInput" type="text" placeholder="Поиск по названию или номеру" />
           <button class="btn btn--secondary" id="searchBtn" type="button">Поиск</button>
           <button class="btn btn--secondary" id="resetBtn" type="button">Сброс</button>
         </div>
@@ -59,7 +59,7 @@
     <section class="panel is-hidden" id="authorCoursesPanel">
       <h2 class="panel__title">Мои Курсы</h2>
       <div class="library-tools">
-        <input class="field-input library-tools__input" id="courseSearchInput" type="text" placeholder="Поиск по названию, тегам или ID" />
+        <input class="field-input library-tools__input" id="courseSearchInput" type="text" placeholder="Поиск по названию, тегам или номеру" />
         <button class="btn btn--secondary" id="courseSearchBtn" type="button">Поиск</button>
         <button class="btn btn--secondary" id="courseResetBtn" type="button">Сброс</button>
         <a class="btn btn--primary" href="/courses/create">Добавить курс</a>
@@ -78,6 +78,6 @@
     </section>
   </main>
 
-  <script type="module" src="/assets/scripts/pages/account.js?v=10"></script>
+  <script type="module" src="/assets/scripts/pages/account.js?v=14"></script>
 </body>
 </html>

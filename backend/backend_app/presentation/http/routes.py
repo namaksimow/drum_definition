@@ -448,6 +448,15 @@ def build_router(container: Container) -> APIRouter:
             if suffix not in allowed_suffixes:
                 raise HTTPException(status_code=400, detail="Unsupported image format")
 
+            if container.object_storage is not None:
+                object_key = f"covers/{uuid4().hex}{suffix}"
+                await container.object_storage.upload_bytes(
+                    object_key=object_key,
+                    data=data,
+                    content_type=content_type or "application/octet-stream",
+                )
+                return {"cover_image_path": f"/api/media/{object_key}"}
+
             assets_dir = Path(container.frontend_assets_dir)
             cover_dir = assets_dir / "images" / "courses"
             cover_dir.mkdir(parents=True, exist_ok=True)
@@ -456,6 +465,25 @@ def build_router(container: Container) -> APIRouter:
             save_path = cover_dir / file_name
             save_path.write_bytes(data)
             return {"cover_image_path": f"/assets/images/courses/{file_name}"}
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise to_http_exception(exc) from exc
+
+    @router.get("/api/media/{object_key:path}")
+    async def get_media_object(object_key: str) -> Response:
+        try:
+            if container.object_storage is None:
+                raise HTTPException(status_code=404, detail="Media storage is not configured")
+
+            payload, media_type = await container.object_storage.get_bytes(object_key=object_key)
+            return Response(
+                content=payload,
+                media_type=media_type or "application/octet-stream",
+                headers={"Cache-Control": "public, max-age=604800"},
+            )
+        except FileNotFoundError:
+            raise HTTPException(status_code=404, detail="Media object not found")
         except HTTPException:
             raise
         except Exception as exc:  # noqa: BLE001

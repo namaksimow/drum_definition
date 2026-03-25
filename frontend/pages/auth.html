@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Авторизация | Drum Tablature</title>
+  <title>Авторизация | Барабанные табулатуры</title>
   <link rel="stylesheet" href="/assets/styles/base.css" />
-  <link rel="stylesheet" href="/assets/styles/components.css?v=5" />
+  <link rel="stylesheet" href="/assets/styles/components.css?v=6" />
   <link rel="stylesheet" href="/assets/styles/pages/auth.css?v=1" />
 </head>
 <body>
   <main class="auth-layout">
     <section class="auth-window" aria-labelledby="authTitle">
-      <p class="auth-window__kicker">Drum Platform</p>
+      <p class="auth-window__kicker">Барабанная платформа</p>
       <h1 class="auth-window__title" id="authTitle">Авторизация</h1>
-      <p class="auth-window__subtitle">Вход и регистрация через email и пароль.</p>
+      <p class="auth-window__subtitle">Вход и регистрация через электронную почту и пароль.</p>
 
       <div class="auth-window__tabs" role="tablist" aria-label="Выбор режима">
         <button class="auth-window__tab auth-window__tab--active" id="loginTabBtn" type="button" role="tab">
@@ -25,18 +25,18 @@
       </div>
 
       <section class="auth-window__section" id="loginSection">
-        <label class="field-label" for="loginEmail">Email</label>
-        <input class="field-input" id="loginEmail" type="email" placeholder="you@example.com" />
+        <label class="field-label" for="loginEmail">Электронная почта</label>
+        <input class="field-input" id="loginEmail" type="email" placeholder="ваш_адрес@почта.рф" />
         <label class="field-label" for="loginPassword">Пароль</label>
         <input class="field-input" id="loginPassword" type="password" placeholder="Твой пароль" />
         <button class="btn btn--primary auth-window__submit" id="loginBtn" type="button">Войти</button>
       </section>
 
       <section class="auth-window__section is-hidden" id="registerSection">
-        <label class="field-label" for="registerEmail">Email</label>
-        <input class="field-input" id="registerEmail" type="email" placeholder="you@example.com" />
-        <label class="field-label" for="registerNickname">Nickname</label>
-        <input class="field-input" id="registerNickname" type="text" placeholder="drummer_nick" />
+        <label class="field-label" for="registerEmail">Электронная почта</label>
+        <input class="field-input" id="registerEmail" type="email" placeholder="ваш_адрес@почта.рф" />
+        <label class="field-label" for="registerNickname">Никнейм</label>
+        <input class="field-input" id="registerNickname" type="text" placeholder="ник_барабанщика" />
         <label class="field-label" for="registerPassword">Пароль</label>
         <input class="field-input" id="registerPassword" type="password" placeholder="Минимум 6 символов" />
         <button class="btn btn--primary auth-window__submit" id="registerBtn" type="button">Зарегистрироваться</button>

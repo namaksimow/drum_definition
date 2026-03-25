@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Создание Табулатуры</title>
   <link rel="stylesheet" href="/assets/styles/base.css" />
-  <link rel="stylesheet" href="/assets/styles/components.css?v=5" />
+  <link rel="stylesheet" href="/assets/styles/components.css?v=6" />
   <link rel="stylesheet" href="/assets/styles/pages/create_tablature.css?v=8" />
 </head>
 <body>
   <main class="create-shell">
     <aside class="menu">
-      <p class="menu__kicker">Drum Platform</p>
+      <p class="menu__kicker">Барабанная платформа</p>
       <h1 class="menu__title">Навигация</h1>
       <a class="menu__btn" href="/#community">Библиотека сообщества</a>
       <a class="menu__btn" href="/#personal">Личная библиотека</a>
@@ -23,7 +23,7 @@
     <section class="create-page">
       <header class="create-page__header">
         <div class="create-page__intro">
-          <p class="create-page__kicker">Create</p>
+          <p class="create-page__kicker">Создание</p>
           <h1 class="create-page__title">Создание табулатуры</h1>
           <p class="create-page__subtitle">Доступно всем. Принимается только MP3.</p>
         </div>
@@ -33,8 +33,8 @@
           <section class="top-auth__panel" id="authPanel">
             <article class="top-auth__card">
               <h3 class="top-auth__title">Вход</h3>
-              <label class="field-label" for="loginEmail">Email</label>
-              <input class="field-input" id="loginEmail" type="email" placeholder="you@example.com" />
+              <label class="field-label" for="loginEmail">Электронная почта</label>
+              <input class="field-input" id="loginEmail" type="email" placeholder="ваш_адрес@почта.рф" />
               <label class="field-label" for="loginPassword">Пароль</label>
               <input class="field-input" id="loginPassword" type="password" placeholder="Твой пароль" />
               <button class="btn btn--secondary" id="loginBtn" type="button">Войти</button>
@@ -42,10 +42,10 @@
 
             <article class="top-auth__card">
               <h3 class="top-auth__title">Регистрация</h3>
-              <label class="field-label" for="registerEmail">Email</label>
-              <input class="field-input" id="registerEmail" type="email" placeholder="you@example.com" />
-              <label class="field-label" for="registerNickname">Nickname</label>
-              <input class="field-input" id="registerNickname" type="text" placeholder="drummer_nick" />
+              <label class="field-label" for="registerEmail">Электронная почта</label>
+              <input class="field-input" id="registerEmail" type="email" placeholder="ваш_адрес@почта.рф" />
+              <label class="field-label" for="registerNickname">Никнейм</label>
+              <input class="field-input" id="registerNickname" type="text" placeholder="ник_барабанщика" />
               <label class="field-label" for="registerPassword">Пароль</label>
               <input class="field-input" id="registerPassword" type="password" placeholder="Минимум 6 символов" />
               <button class="btn btn--primary" id="registerBtn" type="button">Зарегистрироваться</button>
@@ -62,12 +62,12 @@
         <input class="field-input" id="fileInput" type="file" accept=".mp3,audio/mpeg" />
 
         <label class="field-label" for="titleInput">Название табулатуры</label>
-        <input class="field-input" id="titleInput" type="text" placeholder="Например: My Groove 120bpm" />
+        <input class="field-input" id="titleInput" type="text" placeholder="Например: Мой грув 120 уд/мин" />
 
         <label class="field-label" for="visibilitySelect">Видимость (при сохранении в библиотеку)</label>
         <select class="field-input" id="visibilitySelect">
-          <option value="private">private</option>
-          <option value="public">public</option>
+          <option value="private">Приватная</option>
+          <option value="public">Публичная</option>
         </select>
 
         <div class="panel__actions">
@@ -79,12 +79,12 @@
 
       <section class="panel">
         <h2 class="panel__title">Результат</h2>
-        <p class="panel__text">Текущий `job_id`: <strong id="jobIdText">-</strong></p>
+        <p class="panel__text">Текущая табулатура: <strong id="trackNameText">-</strong></p>
         <div class="panel__actions">
-          <button class="btn btn--secondary" id="pdfBtn" type="button">Скачать PDF</button>
-          <button class="btn btn--secondary" id="jsonBtn" type="button">Показать JSON</button>
+          <button class="btn btn--secondary" id="pdfBtn" type="button">Скачать ПДФ</button>
+          <button class="btn btn--secondary" id="jsonBtn" type="button">Показать табулатуру</button>
         </div>
-        <pre class="panel__json" id="jsonView">JSON пока не загружен.</pre>
+        <pre class="panel__json" id="jsonView">Табулатура пока не загружена.</pre>
       </section>
 
       <section class="panel">
@@ -106,6 +106,6 @@
     </div>
   </section>
 
-  <script type="module" src="/assets/scripts/pages/create_tablature.js?v=7"></script>
+  <script type="module" src="/assets/scripts/pages/create_tablature.js?v=10"></script>
 </body>
 </html>

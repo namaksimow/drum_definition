@@ -18,3 +18,11 @@ postgresql/.venv
 postgresql/*.sql
 
 .vscode/
+htmlcov/
+.coverage*
+postman/
+
+.run/
+.pytest_cache
+
+*.png

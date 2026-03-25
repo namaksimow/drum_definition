@@ -1,8 +1,9 @@
 import * as api from "../services/api.js?v=9";
-import { initTopAuthWidget } from "../services/top_auth_widget.js?v=8";
+import { initTopAuthWidget } from "../services/top_auth_widget.js?v=12";
 
 const INSTRUMENTS = ["hihat", "snare", "kick"];
 const INSTRUMENT_SYMBOLS = { hihat: "x", snare: "o", kick: "o" };
+const INSTRUMENT_LABELS = { hihat: "хэт", snare: "малый", kick: "бочка" };
 
 const backLinkEl = document.getElementById("backLink");
 const pageTitleEl = document.getElementById("pageTitle");
@@ -13,6 +14,8 @@ const visibilitySelect = document.getElementById("visibilitySelect");
 const tabHint = document.getElementById("tabHint");
 const tabEditor = document.getElementById("tabEditor");
 const saveBtn = document.getElementById("saveBtn");
+const menuPersonalLink = document.getElementById("menuPersonalLink");
+const menuEditLink = document.getElementById("menuEditLink");
 
 let authToken = "";
 let tablatureId = null;
@@ -38,6 +41,15 @@ function getQueryParam(name) {
   return params.get(name);
 }
 
+function visibilityLabel(value) {
+  return String(value || "").toLowerCase() === "public" ? "публичная" : "приватная";
+}
+
+function applyMenuHighlight(fromPersonal) {
+  if (menuPersonalLink) menuPersonalLink.classList.toggle("menu__btn--active", fromPersonal);
+  if (menuEditLink) menuEditLink.classList.toggle("menu__btn--active", !fromPersonal);
+}
+
 function setStatus(message) {
   if (statusEl) statusEl.textContent = message;
 }
@@ -50,7 +62,7 @@ function getTablatureIdFromPath() {
 }
 
 function getErrorMessage(error) {
-  if (!error) return "Unknown error";
+  if (!error) return "Неизвестная ошибка";
   const raw = typeof error.message === "string" ? error.message : String(error);
   try {
     const parsed = JSON.parse(raw);
@@ -169,7 +181,7 @@ function renderTabEditor(tabData) {
           .join("");
         return `
           <div class="tab-row">
-            <p class="tab-row__label">${instrument}</p>
+            <p class="tab-row__label">${INSTRUMENT_LABELS[instrument] || instrument}</p>
             <div class="tab-row__pattern">${barsHtml}</div>
           </div>
         `;
@@ -177,7 +189,7 @@ function renderTabEditor(tabData) {
 
       return `
         <article class="tab-line">
-          <p class="tab-line__meta">line ${line.line_number || lineIndex + 1} | bars ${line.first_bar || "?"}-${line.last_bar || "?"} | ${formatSec(line.start_sec)} - ${formatSec(line.end_sec)}</p>
+          <p class="tab-line__meta">строка ${line.line_number || lineIndex + 1} | такты ${line.first_bar || "?"}-${line.last_bar || "?"} | ${formatSec(line.start_sec)} - ${formatSec(line.end_sec)}</p>
           ${rows}
         </article>
       `;
@@ -205,7 +217,9 @@ function renderTablature(row) {
   if (!row) return;
   const trackName = row.track_file_name || "Без названия";
   if (pageTitleEl) pageTitleEl.textContent = `Просмотр табулатуры: ${trackName}`;
-  if (subtitleEl) subtitleEl.textContent = `#${row.id} • visibility=${row.visibility || "private"} • task_id=${row.task_id}`;
+  if (subtitleEl) {
+    subtitleEl.textContent = `#${row.id} • видимость: ${visibilityLabel(row.visibility)}`;
+  }
   if (nameInput) nameInput.value = trackName;
   const visibility = String(row.visibility || "private").toLowerCase();
   if (visibilitySelect) {
@@ -229,6 +243,10 @@ async function loadTablature() {
 
 if (saveBtn) {
   saveBtn.addEventListener("click", async () => {
+    if (isMetadataOnlyMode) {
+      setStatus("В режиме просмотра редактирование отключено.");
+      return;
+    }
     if (!authToken || !tablatureId) {
       setStatus("Нужна авторизация.");
       return;
@@ -287,6 +305,7 @@ async function init() {
   isMetadataOnlyMode = String(getQueryParam("mode") || "").toLowerCase() === "view";
   isPatternReadOnly = isMetadataOnlyMode;
   const fromPersonal = String(getQueryParam("from") || "").toLowerCase() === "personal";
+  applyMenuHighlight(fromPersonal);
 
   if (backLinkEl) {
     if (fromPersonal) {
@@ -299,10 +318,16 @@ async function init() {
   }
 
   if (isMetadataOnlyMode) {
+    if (saveBtn) saveBtn.classList.add("is-hidden");
+    if (nameInput) nameInput.disabled = true;
+    if (visibilitySelect) visibilitySelect.disabled = true;
     if (tabHint) {
-      tabHint.textContent = "В этом режиме доступен только просмотр табулатуры. Можно менять только название и видимость.";
+      tabHint.textContent = "В этом режиме доступен только просмотр табулатуры.";
     }
   } else if (tabHint) {
+    if (saveBtn) saveBtn.classList.remove("is-hidden");
+    if (nameInput) nameInput.disabled = false;
+    if (visibilitySelect) visibilitySelect.disabled = false;
     tabHint.innerHTML = "Клик по символу включает/выключает удар: <code>x/o</code> ↔ <code>-</code>.";
   }
 

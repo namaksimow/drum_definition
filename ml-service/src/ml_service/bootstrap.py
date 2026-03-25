@@ -2,12 +2,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from ml_service.adapters.minio.http_storage import MinioHttpFileStorage
 from ml_service.adapters.mock.mock_queue import MockQueue
 from ml_service.adapters.mock.mock_storage import MockFileStorage
 from ml_service.adapters.postgres.postgres_job_repo import PostgresJobRepo
 from ml_service.adapters.postgres.postgres_tablature_store import PostgresTablatureStore
+from ml_service.adapters.queue.http_queue import QueueServiceHttpAdapter
 from ml_service.config import Settings, get_settings
+from ml_service.ports.file_storage import FileStorage
 from ml_service.ports.job_repo import JobRepo
+from ml_service.ports.queue import JobQueue
 from ml_service.ports.tablature_store import TablatureStore
 from ml_service.services.job_service import JobService
 
@@ -16,8 +20,8 @@ from ml_service.services.job_service import JobService
 class Container:
     settings: Settings
     job_repo: JobRepo
-    file_storage: MockFileStorage
-    job_queue: MockQueue
+    file_storage: FileStorage
+    job_queue: JobQueue
     tablature_store: TablatureStore
     job_service: JobService
 
@@ -45,8 +49,20 @@ def get_container() -> Container:
         default_user_password_hash=settings.db_user_password_hash,
         default_role_title=settings.db_user_role_title,
     )
-    file_storage = MockFileStorage(base_dir=settings.data_dir)
-    job_queue = MockQueue()
+    if settings.minio_service_url:
+        file_storage = MinioHttpFileStorage(
+            base_url=settings.minio_service_url,
+            base_dir=settings.data_dir,
+        )
+    else:
+        file_storage = MockFileStorage(base_dir=settings.data_dir)
+    if settings.rabbitmq_service_url:
+        job_queue = QueueServiceHttpAdapter(
+            base_url=settings.rabbitmq_service_url,
+            timeout_sec=settings.rabbitmq_service_timeout_sec,
+        )
+    else:
+        job_queue = MockQueue()
     tablature_store: TablatureStore = PostgresTablatureStore(
         settings.database_url,
         default_visibility_id=settings.tablature_visibility_id,

@@ -17,6 +17,11 @@ const reactionWowBtn = document.getElementById("reactionWowBtn");
 const reactionLikeCount = document.getElementById("reactionLikeCount");
 const reactionFireCount = document.getElementById("reactionFireCount");
 const reactionWowCount = document.getElementById("reactionWowCount");
+const INSTRUMENT_LABELS = { hihat: "хэт", snare: "малый", kick: "бочка" };
+
+function visibilityLabel(value) {
+  return String(value || "").toLowerCase() === "public" ? "публичная" : "приватная";
+}
 
 const state = {
   tablatureId: null,
@@ -32,7 +37,7 @@ function setStatus(message) {
 }
 
 function getErrorMessage(error) {
-  if (!error) return "Unknown error";
+  if (!error) return "Неизвестная ошибка";
   const raw = typeof error.message === "string" ? error.message : String(error);
   try {
     const parsed = JSON.parse(raw);
@@ -99,7 +104,7 @@ function asTabData(jsonFormat) {
 
 function formatAsciiTablature(tabData) {
   if (!tabData || !Array.isArray(tabData.lines) || !tabData.lines.length) {
-    return "No tablature data";
+    return "Нет данных табулатуры";
   }
 
   const out = [];
@@ -110,7 +115,7 @@ function formatAsciiTablature(tabData) {
     const startSecText = Number.isFinite(startSec) ? `${startSec.toFixed(3)}s` : `${line.start_sec}s`;
     const endSecText = Number.isFinite(endSec) ? `${endSec.toFixed(3)}s` : `${line.end_sec}s`;
 
-    out.push(`line ${line.line_number} | bars ${line.first_bar}-${line.last_bar} | ${startSecText} - ${endSecText}`);
+    out.push(`строка ${line.line_number} | такты ${line.first_bar}-${line.last_bar} | ${startSecText} - ${endSecText}`);
 
     ["hihat", "snare", "kick"].forEach((instrument) => {
       const row = bars
@@ -119,7 +124,8 @@ function formatAsciiTablature(tabData) {
           return `|${pattern}|`;
         })
         .join("");
-      out.push(`${instrument.padEnd(5, " ")}${row}`);
+      const label = INSTRUMENT_LABELS[instrument] || instrument;
+      out.push(`${label.padEnd(5, " ")}${row}`);
     });
 
     out.push("");
@@ -146,7 +152,7 @@ function renderComments(items) {
         : "";
       return `
         <article class="comment-item">
-          <p class="comment-item__head">${escapeHtml(item.author || "unknown")} • ${formatCreatedAt(item.created_at)}</p>
+          <p class="comment-item__head">${escapeHtml(item.author || "неизвестно")} • ${formatCreatedAt(item.created_at)}</p>
           <p class="comment-item__body">${escapeHtml(item.content || "")}</p>
           ${actions}
         </article>
@@ -199,9 +205,9 @@ async function loadCommunityTablature() {
     ? await api.fetchAdminTablatureById(state.authToken, state.tablatureId)
     : await api.fetchCommunityTablatureById(state.tablatureId);
   const tablature = payload.tablature || {};
-  const visibilityText = state.adminViewEnabled ? ` • Видимость: ${tablature.visibility || "private"}` : "";
+  const visibilityText = state.adminViewEnabled ? ` • Видимость: ${visibilityLabel(tablature.visibility)}` : "";
   metaEl.textContent =
-    `#${tablature.id} • Автор: ${tablature.author || "unknown"} • Создано: ${formatCreatedAt(tablature.created_at)}` +
+    `#${tablature.id} • Автор: ${tablature.author || "неизвестно"} • Создано: ${formatCreatedAt(tablature.created_at)}` +
     visibilityText;
   const tabData = asTabData(tablature.json_format);
   tabEl.textContent = formatAsciiTablature(tabData);

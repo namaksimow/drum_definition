@@ -1,5 +1,5 @@
 import * as api from "../services/api.js?v=12";
-import { initTopAuthWidget } from "../services/top_auth_widget.js?v=8";
+import { initTopAuthWidget } from "../services/top_auth_widget.js?v=12";
 
 const subtitleEl = document.getElementById("subtitle");
 const statusEl = document.getElementById("status");
@@ -24,7 +24,7 @@ function setStatus(message) {
 }
 
 function getErrorMessage(error) {
-  if (!error) return "Unknown error";
+  if (!error) return "Неизвестная ошибка";
   const raw = typeof error.message === "string" ? error.message : String(error);
   try {
     const parsed = JSON.parse(raw);
@@ -64,10 +64,12 @@ function applyAccessUi() {
 
   if (!subtitleEl) return;
   if (!authUser) {
-    subtitleEl.innerHTML = "Для создания курса нужен вход под пользователем с ролью <code>author</code>.";
+    subtitleEl.innerHTML = "Для создания курса нужен вход под пользователем с ролью <code>автор</code>.";
     return;
   }
-  subtitleEl.innerHTML = `Вход выполнен: ${authUser.nickname || authUser.email}. Роль: ${authUser.role || "user"}.`;
+  const role = String(authUser.role || "").toLowerCase();
+  const roleLabel = role === "author" ? "автор" : role === "admin" ? "администратор" : "пользователь";
+  subtitleEl.innerHTML = `Вход выполнен: ${authUser.nickname || authUser.email}. Роль: ${roleLabel}.`;
 }
 
 if (coverFileInput) {

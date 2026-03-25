@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Редактирование Табулатур</title>
   <link rel="stylesheet" href="/assets/styles/base.css" />
-  <link rel="stylesheet" href="/assets/styles/components.css?v=5" />
+  <link rel="stylesheet" href="/assets/styles/components.css?v=6" />
   <link rel="stylesheet" href="/assets/styles/pages/edit_tablatures.css?v=8" />
 </head>
 <body>
   <main class="edit-shell">
     <aside class="menu">
-      <p class="menu__kicker">Drum Platform</p>
+      <p class="menu__kicker">Барабанная платформа</p>
       <h1 class="menu__title">Навигация</h1>
       <a class="menu__btn" href="/#community">Библиотека сообщества</a>
       <a class="menu__btn" href="/#personal">Личная библиотека</a>
@@ -23,7 +23,7 @@
     <section class="edit-page">
       <header class="edit-page__header">
         <div class="edit-page__intro">
-          <p class="edit-page__kicker">Edit</p>
+          <p class="edit-page__kicker">Редактирование</p>
           <h1 class="edit-page__title">Редактирование табулатур</h1>
           <p class="edit-page__subtitle">Страница доступна только зарегистрированному пользователю.</p>
         </div>
@@ -33,8 +33,8 @@
           <section class="top-auth__panel" id="authPanel">
             <article class="top-auth__card">
               <h3 class="top-auth__title">Вход</h3>
-              <label class="field-label" for="loginEmail">Email</label>
-              <input class="field-input" id="loginEmail" type="email" placeholder="you@example.com" />
+              <label class="field-label" for="loginEmail">Электронная почта</label>
+              <input class="field-input" id="loginEmail" type="email" placeholder="ваш_адрес@почта.рф" />
               <label class="field-label" for="loginPassword">Пароль</label>
               <input class="field-input" id="loginPassword" type="password" placeholder="Твой пароль" />
               <button class="btn btn--secondary" id="loginBtn" type="button">Войти</button>
@@ -42,10 +42,10 @@
 
             <article class="top-auth__card">
               <h3 class="top-auth__title">Регистрация</h3>
-              <label class="field-label" for="registerEmail">Email</label>
-              <input class="field-input" id="registerEmail" type="email" placeholder="you@example.com" />
-              <label class="field-label" for="registerNickname">Nickname</label>
-              <input class="field-input" id="registerNickname" type="text" placeholder="drummer_nick" />
+              <label class="field-label" for="registerEmail">Электронная почта</label>
+              <input class="field-input" id="registerEmail" type="email" placeholder="ваш_адрес@почта.рф" />
+              <label class="field-label" for="registerNickname">Никнейм</label>
+              <input class="field-input" id="registerNickname" type="text" placeholder="ник_барабанщика" />
               <label class="field-label" for="registerPassword">Пароль</label>
               <input class="field-input" id="registerPassword" type="password" placeholder="Минимум 6 символов" />
               <button class="btn btn--primary" id="registerBtn" type="button">Зарегистрироваться</button>
@@ -67,7 +67,7 @@
       <section class="panel" id="editorContent">
         <h2 class="panel__title">Мои табулатуры</h2>
         <div class="tools">
-          <input class="field-input tools__input" id="searchInput" type="text" placeholder="Поиск по названию или ID" />
+          <input class="field-input tools__input" id="searchInput" type="text" placeholder="Поиск по названию или номеру" />
           <button class="btn btn--secondary" id="searchBtn" type="button">Поиск</button>
           <button class="btn btn--secondary" id="resetBtn" type="button">Сброс</button>
         </div>
@@ -82,6 +82,6 @@
     </section>
   </main>
 
-  <script type="module" src="/assets/scripts/pages/edit_tablatures.js?v=7"></script>
+  <script type="module" src="/assets/scripts/pages/edit_tablatures.js?v=9"></script>
 </body>
 </html>

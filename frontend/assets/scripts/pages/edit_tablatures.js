@@ -1,5 +1,5 @@
 import * as api from "../services/api.js?v=9";
-import { initTopAuthWidget } from "../services/top_auth_widget.js?v=8";
+import { initTopAuthWidget } from "../services/top_auth_widget.js?v=12";
 
 const authGuard = document.getElementById("authGuard");
 const editorContent = document.getElementById("editorContent");
@@ -57,7 +57,7 @@ function renderList(items) {
       (item) => `
         <article class="card">
           <h3 class="card__title">#${item.id} • ${item.track_file_name || "Без названия"}</h3>
-          <p class="card__text">Автор: ${item.author || "unknown"}</p>
+          <p class="card__text">Автор: ${item.author || "неизвестно"}</p>
           <p class="card__meta">Создано: ${formatCreatedAt(item.created_at)}</p>
           <div class="card__actions">
             <button class="btn btn--primary" type="button" data-open-id="${item.id}">Редактировать</button>

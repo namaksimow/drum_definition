@@ -52,7 +52,7 @@ function formatCreatedAt(value) {
 }
 
 function getErrorMessage(error) {
-  if (!error) return "Unknown error";
+  if (!error) return "Неизвестная ошибка";
   if (typeof error.message === "string") return error.message;
   return String(error);
 }
@@ -64,6 +64,26 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/\"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+function visibilityLabel(value) {
+  return String(value || "").toLowerCase() === "public" ? "публичная" : "приватная";
+}
+
+function requestStatusLabel(value) {
+  const status = String(value || "").toLowerCase();
+  if (status === "pending") return "ожидает рассмотрения";
+  if (status === "approved") return "одобрена";
+  if (status === "rejected") return "отклонена";
+  return status || "неизвестно";
+}
+
+function roleLabel(value) {
+  const role = String(value || "").toLowerCase();
+  if (role === "admin") return "администратор";
+  if (role === "author") return "автор";
+  if (role === "user") return "пользователь";
+  return value || "-";
 }
 
 function saveUserToStorage(user) {
@@ -90,7 +110,7 @@ function renderUser(user) {
   if (subtitleEl) subtitleEl.textContent = `Пользователь: ${user.nickname || user.email}`;
   if (profileEmailEl) profileEmailEl.textContent = user.email || "-";
   if (profileNicknameEl) profileNicknameEl.textContent = user.nickname || "-";
-  if (profileRoleEl) profileRoleEl.textContent = user.role || "-";
+  if (profileRoleEl) profileRoleEl.textContent = roleLabel(user.role);
   if (nicknameInput) nicknameInput.value = user.nickname || "";
 
   const isAuthor = String(user.role || "").toLowerCase() === "author";
@@ -138,7 +158,7 @@ function renderAuthorRoleRequest(item) {
   const createdAtText = formatCreatedAt(item.created_at);
   authorRequestMessageInput.value = String(item.message || "");
   if (status === "pending") {
-    authorRequestInfo.textContent = `Заявка отправлена: ${createdAtText}. Статус: pending.`;
+    authorRequestInfo.textContent = `Заявка отправлена: ${createdAtText}. Статус: ${requestStatusLabel(status)}.`;
     authorRequestSendBtn.disabled = true;
     authorRequestMessageInput.disabled = true;
     return;
@@ -152,15 +172,15 @@ function renderAuthorRoleRequest(item) {
 
   const adminMessage = String(item.admin_message || "").trim();
   if (status === "rejected") {
-    authorRequestInfo.textContent = `Последняя заявка: ${createdAtText}. Статус: rejected.`;
+    authorRequestInfo.textContent = `Последняя заявка: ${createdAtText}. Статус: ${requestStatusLabel(status)}.`;
     if (adminMessage && authorRequestAdminMessage) {
       authorRequestAdminMessage.textContent = `Причина отказа администратора:\n${adminMessage}`;
       authorRequestAdminMessage.classList.remove("is-hidden");
     }
   } else if (adminMessage) {
-    authorRequestInfo.textContent = `Последняя заявка: ${createdAtText}. Статус: ${status || "unknown"}.`;
+    authorRequestInfo.textContent = `Последняя заявка: ${createdAtText}. Статус: ${requestStatusLabel(status)}.`;
   } else {
-    authorRequestInfo.textContent = `Последняя заявка: ${createdAtText}. Статус: ${status || "unknown"}. Можно отправить новую.`;
+    authorRequestInfo.textContent = `Последняя заявка: ${createdAtText}. Статус: ${requestStatusLabel(status)}. Можно отправить новую.`;
   }
   authorRequestSendBtn.disabled = false;
   authorRequestMessageInput.disabled = false;
@@ -183,14 +203,14 @@ function renderPersonalList(items) {
       (item) => `
         <article class="card">
           <h3 class="card__title">#${item.id} • ${item.track_file_name || "Без названия"}</h3>
-          <p class="card__text">Автор: ${item.author || "unknown"}</p>
+          <p class="card__text">Автор: ${item.author || "неизвестно"}</p>
           <p class="card__meta">Создано: ${formatCreatedAt(item.created_at)}</p>
           <div class="card__actions">
             <button class="btn btn--secondary" type="button" data-pdf-task-id="${item.task_id}" data-row-id="${item.id}">
-              Скачать PDF
+              Скачать ПДФ
             </button>
-            <button class="btn btn--secondary" type="button" data-json-task-id="${item.task_id}" data-row-id="${item.id}">
-              Показать JSON
+            <button class="btn btn--secondary" type="button" data-open-tablature-id="${item.id}">
+              Показать табулатуру
             </button>
           </div>
         </article>
@@ -219,7 +239,7 @@ function renderAuthorCourses(items) {
       const cover = item.cover_image_path
         ? `<img class="card__cover" src="${escapeHtml(item.cover_image_path)}" alt="Обложка курса" loading="lazy" />`
         : "";
-      const visibility = escapeHtml(item.visibility || "private");
+      const visibility = escapeHtml(visibilityLabel(item.visibility));
       return `
         <article class="card" data-course-id="${item.id}">
           ${cover}
@@ -266,10 +286,23 @@ async function loadPersonalTablatures() {
   }
   const query = searchInput && searchInput.value ? searchInput.value.trim() : "";
   try {
-    const payload = await api.fetchPersonalTablatures(authToken, query);
-    const items = Array.isArray(payload.items) ? payload.items : [];
+    const items = [];
+    const pageLimit = 200;
+    let offset = 0;
+
+    while (true) {
+      const payload = await api.fetchPersonalTablatures(authToken, query, {
+        limit: pageLimit,
+        offset,
+      });
+      const chunk = Array.isArray(payload.items) ? payload.items : [];
+      items.push(...chunk);
+      if (chunk.length < pageLimit) break;
+      offset += pageLimit;
+    }
+
     renderPersonalList(items);
-    setStatus(`Загружено табулатур: ${items.length}`);
+    setStatus(`Найдено табулатур: ${items.length}`);
   } catch (error) {
     setStatus(`Ошибка загрузки личной библиотеки: ${getErrorMessage(error)}`);
     renderPersonalList([]);
@@ -359,7 +392,7 @@ if (authorRequestSendBtn) {
       return;
     }
     if (String(currentUser.role || "").toLowerCase() === "author") {
-      setStatus("У тебя уже есть роль author.");
+      setStatus("У тебя уже есть роль автора.");
       return;
     }
 
@@ -437,7 +470,7 @@ if (personalList) {
       const rowId = pdfButton.getAttribute("data-row-id");
       if (!taskId) return;
       try {
-        setStatus(`Скачиваю PDF для задачи ${taskId}...`);
+        setStatus(`Скачиваю ПДФ для задачи ${taskId}...`);
         const blob = await api.fetchPdfByJobId(taskId);
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
@@ -447,24 +480,18 @@ if (personalList) {
         link.click();
         link.remove();
         URL.revokeObjectURL(url);
-        setStatus("PDF скачан.");
+        setStatus("ПДФ скачан.");
       } catch (error) {
-        setStatus(`Ошибка скачивания PDF: ${getErrorMessage(error)}`);
+        setStatus(`Ошибка скачивания ПДФ: ${getErrorMessage(error)}`);
       }
       return;
     }
 
-    const jsonButton = target.closest("[data-json-task-id]");
-    if (jsonButton) {
-      const taskId = jsonButton.getAttribute("data-json-task-id");
-      if (!taskId) return;
-      try {
-        setStatus(`Получаю JSON для задачи ${taskId}...`);
-        const payload = await api.fetchTablatureByJobId(taskId);
-        setStatus(JSON.stringify(payload, null, 2));
-      } catch (error) {
-        setStatus(`Ошибка получения JSON: ${getErrorMessage(error)}`);
-      }
+    const openButton = target.closest("[data-open-tablature-id]");
+    if (openButton) {
+      const tablatureId = openButton.getAttribute("data-open-tablature-id");
+      if (!tablatureId) return;
+      window.location.href = `/edit/tablature/${encodeURIComponent(tablatureId)}?from=personal&mode=view`;
     }
   });
 }

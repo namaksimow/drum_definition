@@ -5,6 +5,7 @@ from functools import lru_cache
 
 from backend_app.adapters.frontend_filesystem import FrontendFilesystemAdapter
 from backend_app.adapters.ml_service_http import MlServiceHttpAdapter
+from backend_app.adapters.object_storage_http import ObjectStorageHttpAdapter
 from backend_app.adapters.postgres_service_http import PostgresServiceHttpAdapter
 from backend_app.application.use_cases.download_public_tablature_json import DownloadPublicTablatureJsonUseCase
 from backend_app.application.use_cases.create_personal_author_role_request import CreatePersonalAuthorRoleRequestUseCase
@@ -115,6 +116,7 @@ class Container:
     list_admin_author_role_requests: ListAdminAuthorRoleRequestsUseCase
     update_admin_author_role_request: UpdateAdminAuthorRoleRequestUseCase
     frontend_assets_dir: str
+    object_storage: ObjectStorageHttpAdapter | None
 
 
 @lru_cache(maxsize=1)
@@ -130,6 +132,12 @@ def get_container() -> Container:
         base_url=settings.postgres_service_url,
         timeout_sec=settings.ml_service_timeout_sec,
     )
+    object_storage: ObjectStorageHttpAdapter | None = None
+    if settings.minio_service_url:
+        object_storage = ObjectStorageHttpAdapter(
+            base_url=settings.minio_service_url,
+            timeout_sec=settings.ml_service_timeout_sec,
+        )
 
     return Container(
         settings=settings,
@@ -185,4 +193,5 @@ def get_container() -> Container:
         list_admin_author_role_requests=ListAdminAuthorRoleRequestsUseCase(postgres_service=postgres_adapter),
         update_admin_author_role_request=UpdateAdminAuthorRoleRequestUseCase(postgres_service=postgres_adapter),
         frontend_assets_dir=str(frontend_adapter.assets_dir()),
+        object_storage=object_storage,
     )

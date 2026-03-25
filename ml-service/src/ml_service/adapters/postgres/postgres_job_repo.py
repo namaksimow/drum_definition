@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, MetaData, Table, Text, func, insert, select, update
+from sqlalchemy import JSON, Column, DateTime, ForeignKey, Integer, MetaData, Table, Text, func, insert, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 
@@ -86,6 +86,8 @@ class PostgresJobRepo(JobRepo):
             Column("id", Integer, primary_key=True),
             Column("track_id", Integer, ForeignKey("tracks.id"), nullable=False),
             Column("status_id", Integer, ForeignKey("status.id"), nullable=False),
+            Column("result_manifest", JSON, nullable=False),
+            Column("error", Text, nullable=True),
             Column("created_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
             Column("started_at", DateTime(timezone=True), nullable=True),
             Column("finished_at", DateTime(timezone=True), nullable=True),
@@ -243,6 +245,8 @@ class PostgresJobRepo(JobRepo):
                     self._task_table.c.created_at,
                     self._task_table.c.started_at,
                     self._task_table.c.finished_at,
+                    self._task_table.c.result_manifest,
+                    self._task_table.c.error,
                     self._status_table.c.title.label("status_title"),
                     self._tracks_table.c.file_name,
                     self._tracks_table.c.file_path,
@@ -272,8 +276,8 @@ class PostgresJobRepo(JobRepo):
             status=status_title,  # type: ignore[arg-type]
             created_at=_to_iso(row.created_at),
             updated_at=_to_iso(updated_at_dt),
-            result_manifest={},
-            error=None,
+            result_manifest=dict(row.result_manifest or {}),
+            error=str(row.error) if row.error is not None else None,
         )
 
     async def list(self) -> list[Job]:
@@ -284,6 +288,8 @@ class PostgresJobRepo(JobRepo):
                     self._task_table.c.created_at,
                     self._task_table.c.started_at,
                     self._task_table.c.finished_at,
+                    self._task_table.c.result_manifest,
+                    self._task_table.c.error,
                     self._status_table.c.title.label("status_title"),
                     self._tracks_table.c.file_name,
                     self._tracks_table.c.file_path,
@@ -311,8 +317,8 @@ class PostgresJobRepo(JobRepo):
                     status=status_title,  # type: ignore[arg-type]
                     created_at=_to_iso(row.created_at),
                     updated_at=_to_iso(updated_at_dt),
-                    result_manifest={},
-                    error=None,
+                    result_manifest=dict(row.result_manifest or {}),
+                    error=str(row.error) if row.error is not None else None,
                 )
             )
         return jobs
@@ -339,13 +345,16 @@ class PostgresJobRepo(JobRepo):
                         values["started_at"] = func.now()
                     if status in {"done", "failed"}:
                         values["finished_at"] = func.now()
+                values["error"] = error
 
                 if values:
                     await session.execute(
                         update(self._task_table).where(self._task_table.c.id == task_id).values(**values)
                     )
-
-        # result_manifest/error currently not represented in DB schema.
-        _ = result_manifest
-        _ = error
+                if result_manifest is not None:
+                    await session.execute(
+                        update(self._task_table)
+                        .where(self._task_table.c.id == task_id)
+                        .values(result_manifest=result_manifest)
+                    )
         return await self.get(job_id)

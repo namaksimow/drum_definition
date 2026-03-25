@@ -92,6 +92,13 @@
   color: var(--text-muted);
 }
 
+.detail-page__actions {
+  margin-top: 18px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .panel {
   background: var(--surface);
   border: 1px solid var(--line);

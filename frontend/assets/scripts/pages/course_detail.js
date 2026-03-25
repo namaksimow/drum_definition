@@ -1,5 +1,5 @@
 import * as api from "../services/api.js?v=16";
-import { initTopAuthWidget } from "../services/top_auth_widget.js?v=9";
+import { initTopAuthWidget } from "../services/top_auth_widget.js?v=12";
 
 const titleEl = document.getElementById("courseTitle");
 const subtitleEl = document.getElementById("courseSubtitle");
@@ -30,7 +30,7 @@ function setStatus(message) {
 }
 
 function getErrorMessage(error) {
-  if (!error) return "Unknown error";
+  if (!error) return "Неизвестная ошибка";
   const raw = typeof error.message === "string" ? error.message : String(error);
   try {
     const parsed = JSON.parse(raw);
@@ -74,6 +74,10 @@ function formatUpdatedAt(value) {
   return formatCreatedAt(value);
 }
 
+function visibilityLabel(value) {
+  return String(value || "").toLowerCase() === "public" ? "публичная" : "приватная";
+}
+
 function isAdminUser(user) {
   const role = String(user?.role || "").toLowerCase();
   const email = String(user?.email || "").toLowerCase();
@@ -108,6 +112,21 @@ function setEditorVisible(visible) {
   lessonEditorPanel.classList.toggle("is-hidden", !visible);
 }
 
+async function findCourseInListPageLoader(loadPage) {
+  if (typeof loadPage !== "function") return null;
+  const pageLimit = 200;
+  let offset = 0;
+
+  while (true) {
+    const payload = await loadPage(pageLimit, offset);
+    const items = Array.isArray(payload?.items) ? payload.items : [];
+    const found = items.find((item) => Number(item?.id) === Number(courseId));
+    if (found) return found;
+    if (items.length < pageLimit) return null;
+    offset += pageLimit;
+  }
+}
+
 async function loadCourseMeta() {
   if (!courseId) return;
   try {
@@ -116,11 +135,13 @@ async function loadCourseMeta() {
       const payload = await api.fetchAdminCourseById(authToken, courseId);
       course = payload && payload.course ? payload.course : null;
     } else {
-      const payload = editableMode
-        ? await api.fetchPersonalCourses(authToken, String(courseId), { limit: 200, offset: 0 })
-        : await api.fetchCourses(String(courseId), { limit: 200, offset: 0 });
-      const items = Array.isArray(payload.items) ? payload.items : [];
-      course = items.find((item) => Number(item.id) === Number(courseId)) || null;
+      course = editableMode
+        ? await findCourseInListPageLoader((limit, offset) =>
+            api.fetchPersonalCourses(authToken, "", { limit, offset })
+          )
+        : await findCourseInListPageLoader((limit, offset) =>
+            api.fetchCourses("", { limit, offset })
+          );
     }
     if (!course) {
       if (titleEl) titleEl.textContent = `Курс #${courseId}`;
@@ -132,11 +153,11 @@ async function loadCourseMeta() {
     if (subtitleEl) {
       let mode = editableMode ? "Режим редактирования уроков" : "Режим просмотра уроков";
       if (adminViewEnabled) {
-        mode = `Режим администратора • Видимость: ${course.visibility || "private"}`;
+        mode = `Режим администратора • Видимость: ${visibilityLabel(course.visibility)}`;
       } else if (!editableMode && authToken) {
         mode = "Режим просмотра уроков (можно отмечать пройденные)";
       }
-      subtitleEl.textContent = `Автор: ${course.author || "unknown"} • Обновлен: ${lastCourseUpdatedAtText} • ${mode}`;
+      subtitleEl.textContent = `Автор: ${course.author || "неизвестно"} • Обновлен: ${lastCourseUpdatedAtText} • ${mode}`;
     }
   } catch {
     lastCourseUpdatedAtText = "";

@@ -132,10 +132,17 @@ class JobService:
 
     async def run_worker_loop(self, *, stop_event: asyncio.Event, poll_timeout_sec: float = 1.0) -> None:
         while not stop_event.is_set():
-            job_id = await self.queue.consume(timeout=poll_timeout_sec)
+            try:
+                job_id = await self.queue.consume(timeout=poll_timeout_sec)
+            except Exception:  # noqa: BLE001
+                await asyncio.sleep(min(max(poll_timeout_sec, 0.1), 2.0))
+                continue
             if job_id is None:
                 continue
-            await self.process_job(job_id)
+            try:
+                await self.process_job(job_id)
+            except Exception:  # noqa: BLE001
+                continue
 
     def _run_pipeline(self, *, input_path: Path, result_dir: Path) -> dict:
         pipeline_result = run_song_pipeline(

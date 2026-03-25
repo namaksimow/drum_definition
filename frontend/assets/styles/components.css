@@ -110,3 +110,29 @@
 .top-auth__actions .btn {
   width: 100%;
 }
+
+.top-auth__panel--account {
+  width: min(220px, 92vw);
+  padding: 6px;
+}
+
+.top-auth__account-menu {
+  display: grid;
+  gap: 4px;
+}
+
+.top-auth__menu-item {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.top-auth__menu-item:hover {
+  background: #f3efe6;
+}

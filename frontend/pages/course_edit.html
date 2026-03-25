@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Редактирование курса</title>
   <link rel="stylesheet" href="/assets/styles/base.css" />
-  <link rel="stylesheet" href="/assets/styles/components.css?v=5" />
+  <link rel="stylesheet" href="/assets/styles/components.css?v=6" />
   <link rel="stylesheet" href="/assets/styles/pages/course_edit.css?v=2" />
 </head>
 <body>
   <main class="course-edit-shell">
     <aside class="menu">
-      <p class="menu__kicker">Drum Platform</p>
+      <p class="menu__kicker">Барабанная платформа</p>
       <h1 class="menu__title">Навигация</h1>
       <a class="menu__btn" href="/#community">Библиотека сообщества</a>
       <a class="menu__btn" href="/#personal">Личная библиотека</a>
@@ -23,7 +23,7 @@
     <section class="course-edit-page">
       <header class="course-edit-page__header">
         <div class="course-edit-page__intro">
-          <p class="course-edit-page__kicker">Courses</p>
+          <p class="course-edit-page__kicker">Курсы</p>
           <h1 class="course-edit-page__title">Редактирование курса</h1>
           <p class="course-edit-page__subtitle" id="subtitle">Загрузка курса...</p>
         </div>
@@ -33,8 +33,8 @@
           <section class="top-auth__panel" id="authPanel">
             <article class="top-auth__card">
               <h3 class="top-auth__title">Вход</h3>
-              <label class="field-label" for="loginEmail">Email</label>
-              <input class="field-input" id="loginEmail" type="email" placeholder="you@example.com" />
+              <label class="field-label" for="loginEmail">Электронная почта</label>
+              <input class="field-input" id="loginEmail" type="email" placeholder="ваш_адрес@почта.рф" />
               <label class="field-label" for="loginPassword">Пароль</label>
               <input class="field-input" id="loginPassword" type="password" placeholder="Твой пароль" />
               <button class="btn btn--secondary" id="loginBtn" type="button">Войти</button>
@@ -42,10 +42,10 @@
 
             <article class="top-auth__card">
               <h3 class="top-auth__title">Регистрация</h3>
-              <label class="field-label" for="registerEmail">Email</label>
-              <input class="field-input" id="registerEmail" type="email" placeholder="you@example.com" />
-              <label class="field-label" for="registerNickname">Nickname</label>
-              <input class="field-input" id="registerNickname" type="text" placeholder="drummer_nick" />
+              <label class="field-label" for="registerEmail">Электронная почта</label>
+              <input class="field-input" id="registerEmail" type="email" placeholder="ваш_адрес@почта.рф" />
+              <label class="field-label" for="registerNickname">Никнейм</label>
+              <input class="field-input" id="registerNickname" type="text" placeholder="ник_барабанщика" />
               <label class="field-label" for="registerPassword">Пароль</label>
               <input class="field-input" id="registerPassword" type="password" placeholder="Минимум 6 символов" />
               <button class="btn btn--primary" id="registerBtn" type="button">Зарегистрироваться</button>
@@ -74,12 +74,12 @@
         <textarea class="field-input field-textarea" id="courseDescriptionInput" placeholder="Описание курса"></textarea>
 
         <label class="field-label" for="courseTagsInput">Теги (через запятую)</label>
-        <input class="field-input" id="courseTagsInput" type="text" placeholder="groove, rock, intermediate" />
+        <input class="field-input" id="courseTagsInput" type="text" placeholder="грув, рок, средний" />
 
         <label class="field-label" for="courseVisibilitySelect">Видимость</label>
         <select class="field-input" id="courseVisibilitySelect">
-          <option value="public">public</option>
-          <option value="private">private</option>
+          <option value="public">Публичная</option>
+          <option value="private">Приватная</option>
         </select>
 
         <label class="field-label" for="coverFileInput">Новая картинка курса (опционально)</label>
@@ -102,6 +102,6 @@
     </section>
   </main>
 
-  <script type="module" src="/assets/scripts/pages/course_edit.js?v=2"></script>
+  <script type="module" src="/assets/scripts/pages/course_edit.js?v=4"></script>
 </body>
 </html>

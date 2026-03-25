@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Админ Панель</title>
+  <title>Панель администратора</title>
   <link rel="stylesheet" href="/assets/styles/base.css" />
-  <link rel="stylesheet" href="/assets/styles/components.css?v=5" />
+  <link rel="stylesheet" href="/assets/styles/components.css?v=6" />
   <link rel="stylesheet" href="/assets/styles/pages/admin.css?v=9" />
 </head>
 <body>
   <main class="admin-page">
     <header class="admin-page__header">
       <div class="admin-page__intro">
-        <p class="admin-page__kicker">Admin Console</p>
+        <p class="admin-page__kicker">Панель администратора</p>
         <h1 class="admin-page__title">Админ-консоль</h1>
         <p class="admin-page__subtitle" id="subtitle">Загрузка...</p>
       </div>
@@ -22,8 +22,8 @@
         <section class="top-auth__panel" id="authPanel">
           <article class="top-auth__card">
             <h3 class="top-auth__title">Вход</h3>
-            <label class="field-label" for="loginEmail">Email</label>
-            <input class="field-input" id="loginEmail" type="email" placeholder="you@example.com" />
+            <label class="field-label" for="loginEmail">Электронная почта</label>
+            <input class="field-input" id="loginEmail" type="email" placeholder="ваш_адрес@почта.рф" />
             <label class="field-label" for="loginPassword">Пароль</label>
             <input class="field-input" id="loginPassword" type="password" placeholder="Твой пароль" />
             <button class="btn btn--secondary" id="loginBtn" type="button">Войти</button>
@@ -31,10 +31,10 @@
 
           <article class="top-auth__card">
             <h3 class="top-auth__title">Регистрация</h3>
-            <label class="field-label" for="registerEmail">Email</label>
-            <input class="field-input" id="registerEmail" type="email" placeholder="you@example.com" />
-            <label class="field-label" for="registerNickname">Nickname</label>
-            <input class="field-input" id="registerNickname" type="text" placeholder="drummer_nick" />
+            <label class="field-label" for="registerEmail">Электронная почта</label>
+            <input class="field-input" id="registerEmail" type="email" placeholder="ваш_адрес@почта.рф" />
+            <label class="field-label" for="registerNickname">Никнейм</label>
+            <input class="field-input" id="registerNickname" type="text" placeholder="ник_барабанщика" />
             <label class="field-label" for="registerPassword">Пароль</label>
             <input class="field-input" id="registerPassword" type="password" placeholder="Минимум 6 символов" />
             <button class="btn btn--primary" id="registerBtn" type="button">Зарегистрироваться</button>
@@ -123,16 +123,16 @@
 
       <p class="user-editor__meta" id="userDetailMeta">-</p>
 
-      <label class="field-label" for="userEditEmailInput">Email</label>
-      <input class="field-input" id="userEditEmailInput" type="email" placeholder="user@example.com" />
+      <label class="field-label" for="userEditEmailInput">Электронная почта</label>
+      <input class="field-input" id="userEditEmailInput" type="email" placeholder="адрес@почта.рф" />
 
       <label class="field-label" for="userEditNicknameInput">Никнейм</label>
-      <input class="field-input" id="userEditNicknameInput" type="text" placeholder="nickname" />
+      <input class="field-input" id="userEditNicknameInput" type="text" placeholder="никнейм" />
 
       <label class="field-label" for="userEditRoleSelect">Роль</label>
       <select class="field-input" id="userEditRoleSelect">
-        <option value="user">user</option>
-        <option value="author">author</option>
+        <option value="user">Пользователь</option>
+        <option value="author">Автор</option>
       </select>
 
       <div class="user-editor__actions">

@@ -1,5 +1,5 @@
 import * as api from "../services/api.js?v=15";
-import { initTopAuthWidget } from "../services/top_auth_widget.js?v=8";
+import { initTopAuthWidget } from "../services/top_auth_widget.js?v=12";
 
 const titleEl = document.getElementById("courseTitle");
 const subtitleEl = document.getElementById("courseSubtitle");
@@ -17,7 +17,7 @@ function setStatus(message) {
 }
 
 function getErrorMessage(error) {
-  if (!error) return "Unknown error";
+  if (!error) return "Неизвестная ошибка";
   const raw = typeof error.message === "string" ? error.message : String(error);
   try {
     const parsed = JSON.parse(raw);
@@ -79,7 +79,7 @@ function renderVisitors(items) {
     .map(
       (item) => `
         <article class="stat-row">
-          <p class="stat-row__main">${escapeHtml(item.user_name || "unknown")}</p>
+          <p class="stat-row__main">${escapeHtml(item.user_name || "неизвестно")}</p>
           <p class="stat-row__meta">${formatDateTime(item.first_visit_at)}</p>
         </article>
       `
@@ -103,7 +103,7 @@ function renderCompletions(items) {
     .map(
       (item) => `
         <article class="stat-row">
-          <p class="stat-row__main">${escapeHtml(item.user_name || "unknown")} • ${escapeHtml(item.lesson_title || "Без названия урока")}</p>
+          <p class="stat-row__main">${escapeHtml(item.user_name || "неизвестно")} • ${escapeHtml(item.lesson_title || "Без названия урока")}</p>
           <p class="stat-row__meta">${formatDateTime(item.completed_at)}</p>
         </article>
       `
@@ -128,7 +128,7 @@ async function loadStatistics() {
     if (subtitleEl) subtitleEl.textContent = "Статистика доступна только автору курса.";
     renderVisitors([]);
     renderCompletions([]);
-    setStatus("Только пользователь с ролью author может смотреть статистику.");
+    setStatus("Только пользователь с ролью автора может смотреть статистику.");
     return;
   }
 

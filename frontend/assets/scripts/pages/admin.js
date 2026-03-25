@@ -1,5 +1,5 @@
 import * as api from "../services/api.js?v=22";
-import { initTopAuthWidget } from "../services/top_auth_widget.js?v=8";
+import { initTopAuthWidget } from "../services/top_auth_widget.js?v=12";
 
 const subtitleEl = document.getElementById("subtitle");
 const statusEl = document.getElementById("status");
@@ -43,7 +43,7 @@ function setStatus(message) {
 }
 
 function getErrorMessage(error) {
-  if (!error) return "Unknown error";
+  if (!error) return "Неизвестная ошибка";
   const raw = typeof error.message === "string" ? error.message : String(error);
   try {
     const parsed = JSON.parse(raw);
@@ -80,12 +80,28 @@ function normalizeVisibility(value) {
   return String(value || "").trim().toLowerCase() === "public" ? "public" : "private";
 }
 
+function getVisibilityLabel(value) {
+  return normalizeVisibility(value) === "public" ? "публичная" : "приватная";
+}
+
 function getToggledVisibility(value) {
   return normalizeVisibility(value) === "public" ? "private" : "public";
 }
 
 function normalizeAdminUserRole(value) {
   return String(value || "").trim().toLowerCase() === "author" ? "author" : "user";
+}
+
+function getRoleLabel(value) {
+  return normalizeAdminUserRole(value) === "author" ? "автор" : "пользователь";
+}
+
+function getRequestStatusLabel(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized === "approved") return "одобрена";
+  if (normalized === "rejected") return "отклонена";
+  if (normalized === "pending") return "ожидает рассмотрения";
+  return normalized || "неизвестно";
 }
 
 function isAdmin() {
@@ -136,9 +152,9 @@ function renderRequestsList() {
       const suffix = String(item.message || "").trim().length > 120 ? "..." : "";
       return `
         <article class="card ${selected ? "card--selected" : ""}" data-request-id="${item.id}">
-          <h3 class="card__title">Заявка #${item.id} • ${escapeHtml(item.user_nickname || item.user_email || "unknown")}</h3>
-          <p class="card__meta">Email: ${escapeHtml(item.user_email || "-")}</p>
-          <p class="card__meta">Статус: ${escapeHtml(item.status || "pending")} • Создана: ${formatDateTime(item.created_at)}</p>
+          <h3 class="card__title">Заявка #${item.id} • ${escapeHtml(item.user_nickname || item.user_email || "неизвестно")}</h3>
+          <p class="card__meta">Электронная почта: ${escapeHtml(item.user_email || "-")}</p>
+          <p class="card__meta">Статус: ${escapeHtml(getRequestStatusLabel(item.status))} • Создана: ${formatDateTime(item.created_at)}</p>
           <p class="card__text">${escapeHtml(messagePreview)}${suffix}</p>
         </article>
       `;
@@ -165,10 +181,11 @@ function renderAdminTablatures() {
       const fire = Number(item.reactions_fire_count || 0);
       const wow = Number(item.reactions_wow_count || 0);
       const visibility = normalizeVisibility(item.visibility);
+      const visibilityLabel = getVisibilityLabel(item.visibility);
       return `
         <article class="card" data-tablature-id="${item.id}">
           <h3 class="card__title">#${item.id} • ${escapeHtml(item.track_file_name || "Без названия")}</h3>
-          <p class="card__meta">Автор: ${escapeHtml(item.author || "unknown")} • Создано: ${formatDateTime(item.created_at)}</p>
+          <p class="card__meta">Автор: ${escapeHtml(item.author || "неизвестно")} • Создано: ${formatDateTime(item.created_at)}</p>
           <button
             class="card__badge card__badge--action"
             type="button"
@@ -177,9 +194,9 @@ function renderAdminTablatures() {
             data-current-visibility="${visibility}"
             title="Нажми, чтобы переключить видимость"
           >
-            Видимость: ${visibility}
+            Видимость: ${visibilityLabel}
           </button>
-          <p class="card__social">Комментарии: ${comments} • Like: ${likes} • Fire: ${fire} • Wow: ${wow}</p>
+          <p class="card__social">Комментарии: ${comments} • Нравится: ${likes} • Огонь: ${fire} • Вау: ${wow}</p>
           <div class="card__actions">
             <button class="btn btn--secondary" type="button" data-open-tablature-id="${item.id}">Просмотр</button>
             <button class="btn btn--secondary card__delete-btn" type="button" data-delete-tablature-id="${item.id}">Удалить</button>
@@ -207,6 +224,7 @@ function renderAdminCourses() {
       const tags = Array.isArray(item.tags) ? item.tags.map((tag) => escapeHtml(tag)).join(", ") : "";
       const safeTags = tags || "без тегов";
       const visibility = normalizeVisibility(item.visibility);
+      const visibilityLabel = getVisibilityLabel(item.visibility);
       const cover = typeof item.cover_image_path === "string" && item.cover_image_path.trim()
         ? `<img class="card__cover" src="${escapeHtml(item.cover_image_path)}" alt="Обложка курса" loading="lazy" />`
         : "";
@@ -214,7 +232,7 @@ function renderAdminCourses() {
         <article class="card" data-course-id="${item.id}">
           ${cover}
           <h3 class="card__title">#${item.id} • ${escapeHtml(item.title || "Без названия")}</h3>
-          <p class="card__meta">Автор: ${escapeHtml(item.author || "unknown")} • Создано: ${formatDateTime(item.created_at)} • Обновлено: ${formatDateTime(item.updated_at)}</p>
+          <p class="card__meta">Автор: ${escapeHtml(item.author || "неизвестно")} • Создано: ${formatDateTime(item.created_at)} • Обновлено: ${formatDateTime(item.updated_at)}</p>
           <button
             class="card__badge card__badge--action"
             type="button"
@@ -223,7 +241,7 @@ function renderAdminCourses() {
             data-current-visibility="${visibility}"
             title="Нажми, чтобы переключить видимость"
           >
-            Видимость: ${visibility}
+            Видимость: ${visibilityLabel}
           </button>
           <p class="card__text">${escapeHtml(item.description || "Описание не заполнено.")}</p>
           <p class="card__meta">Теги: ${safeTags}</p>
@@ -253,11 +271,12 @@ function renderAdminUsers() {
     .map((item) => {
       const selected = String(item.id) === String(selectedAdminUserId);
       const role = normalizeAdminUserRole(item.role);
+      const roleLabel = getRoleLabel(item.role);
       return `
         <article class="card ${selected ? "card--selected" : ""}" data-admin-user-id="${item.id}">
           <h3 class="card__title">#${item.id} • ${escapeHtml(item.nickname || "-")}</h3>
-          <p class="card__meta">Email: ${escapeHtml(item.email || "-")}</p>
-          <p class="card__meta">Роль: ${escapeHtml(role)}</p>
+          <p class="card__meta">Электронная почта: ${escapeHtml(item.email || "-")}</p>
+          <p class="card__meta">Роль: ${escapeHtml(roleLabel)}</p>
         </article>
       `;
     })
@@ -273,8 +292,9 @@ function renderUserDetails() {
 
   setUserDetailVisible(true);
   const role = normalizeAdminUserRole(selected.role);
+  const roleLabel = getRoleLabel(selected.role);
   if (userDetailMetaEl) {
-    userDetailMetaEl.textContent = `Пользователь #${selected.id} • Текущая роль: ${role}`;
+    userDetailMetaEl.textContent = `Пользователь #${selected.id} • Текущая роль: ${roleLabel}`;
   }
   if (userEditEmailInput) {
     userEditEmailInput.value = String(selected.email || "");
@@ -298,7 +318,7 @@ function renderRequestDetails() {
   if (requestDetailMetaEl) {
     requestDetailMetaEl.textContent =
       `Заявка #${selected.id} • Пользователь: ${selected.user_nickname || selected.user_email || "-"} • ` +
-      `Статус: ${selected.status || "pending"} • ` +
+      `Статус: ${getRequestStatusLabel(selected.status)} • ` +
       `Создана: ${formatDateTime(selected.created_at)} • Обновлена: ${formatDateTime(selected.updated_at)}`;
   }
   if (requestDetailMessageEl) {
@@ -412,7 +432,7 @@ async function loadRequests() {
     selectedRequestId = null;
     renderRequestsList();
     renderRequestDetails();
-    setStatus("Войди под пользователем с ролью admin.");
+    setStatus("Войди под пользователем с ролью администратора.");
     return;
   }
 
@@ -655,7 +675,7 @@ if (saveUserBtn) {
     const nickname = userEditNicknameInput ? userEditNicknameInput.value.trim() : "";
     const role = userEditRoleSelect ? userEditRoleSelect.value : "user";
     if (!email || !nickname) {
-      setStatus("Email и никнейм обязательны.");
+      setStatus("Электронная почта и никнейм обязательны.");
       return;
     }
 
@@ -699,7 +719,7 @@ if (deleteUserBtn) {
     }
 
     const confirmation = window.confirm(
-      `Удалить пользователя #${selected.id} (${selected.nickname || selected.email || "unknown"})? ` +
+      `Удалить пользователя #${selected.id} (${selected.nickname || selected.email || "неизвестно"})? ` +
       "Будут удалены его табулатуры и курсы."
     );
     if (!confirmation) {
@@ -737,7 +757,7 @@ if (approveRequestBtn) {
       approveRequestBtn.disabled = true;
       if (rejectRequestBtn) rejectRequestBtn.disabled = true;
       await api.updateAdminAuthorRoleRequest(authToken, selected.id, "approved");
-      setStatus(`Заявка #${selected.id} одобрена. Пользователь получил роль author.`);
+      setStatus(`Заявка #${selected.id} одобрена. Пользователь получил роль автора.`);
       await loadRequests();
     } catch (error) {
       setStatus(`Ошибка обновления заявки: ${getErrorMessage(error)}`);

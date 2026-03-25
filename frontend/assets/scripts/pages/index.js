@@ -152,7 +152,7 @@ function formatCreatedAt(value) {
 }
 
 function getErrorMessage(error) {
-  if (!error) return "Unknown error";
+  if (!error) return "Неизвестная ошибка";
   if (typeof error.message === "string") return error.message;
   return String(error);
 }
@@ -258,16 +258,16 @@ function renderTabCards(container, items, emptyTitle, emptyText, mode = "generic
               <img class="social-stat__icon" src="/assets/images/reactions/comment.svg" alt="Комментарии" loading="lazy" onerror="this.style.display='none'" />
               <span class="social-stat__value">${commentsCount}</span>
             </span>
-            <span class="social-stat" title="Like">
-              <img class="social-stat__icon" src="/assets/images/reactions/like.svg" alt="Like" loading="lazy" onerror="this.style.display='none'" />
+            <span class="social-stat" title="Нравится">
+              <img class="social-stat__icon" src="/assets/images/reactions/like.svg" alt="Нравится" loading="lazy" onerror="this.style.display='none'" />
               <span class="social-stat__value">${likeCount}</span>
             </span>
-            <span class="social-stat" title="Fire">
-              <img class="social-stat__icon" src="/assets/images/reactions/fire.svg" alt="Fire" loading="lazy" onerror="this.style.display='none'" />
+            <span class="social-stat" title="Огонь">
+              <img class="social-stat__icon" src="/assets/images/reactions/fire.svg" alt="Огонь" loading="lazy" onerror="this.style.display='none'" />
               <span class="social-stat__value">${fireCount}</span>
             </span>
-            <span class="social-stat" title="Wow">
-              <img class="social-stat__icon" src="/assets/images/reactions/wow.svg" alt="Wow" loading="lazy" onerror="this.style.display='none'" />
+            <span class="social-stat" title="Вау">
+              <img class="social-stat__icon" src="/assets/images/reactions/wow.svg" alt="Вау" loading="lazy" onerror="this.style.display='none'" />
               <span class="social-stat__value">${wowCount}</span>
             </span>
           </div>
@@ -276,7 +276,7 @@ function renderTabCards(container, items, emptyTitle, emptyText, mode = "generic
         return `
         <article class="card">
           <h3 class="card__title">#${item.id} • ${item.track_file_name || "Без названия"}</h3>
-          <p class="card__text">Автор: ${item.author || "unknown"}</p>
+          <p class="card__text">Автор: ${item.author || "неизвестно"}</p>
           <p class="card__meta">Создано: ${formatCreatedAt(item.created_at)}</p>
           ${socialStatsHtml}
           <div class="card__actions">
@@ -289,7 +289,7 @@ function renderTabCards(container, items, emptyTitle, emptyText, mode = "generic
               data-download-id="${item.id}"
               data-task-id="${item.task_id}"
             >
-              Скачать PDF
+              Скачать ПДФ
             </button>
           </div>
         </article>
@@ -378,7 +378,7 @@ function wireTabCardActions(container, mode = "community") {
     if (!tablatureId || !taskId) return;
 
     try {
-      setStatus(`Скачиваю PDF табулатуры #${tablatureId}...`);
+      setStatus(`Скачиваю ПДФ табулатуры #${tablatureId}...`);
       const blob = await api.fetchPdfByJobId(taskId);
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -388,9 +388,9 @@ function wireTabCardActions(container, mode = "community") {
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
-      setStatus(`PDF табулатуры #${tablatureId} скачан`);
+      setStatus(`ПДФ табулатуры #${tablatureId} скачан`);
     } catch (error) {
-      setStatus(`Ошибка скачивания PDF:\n${getErrorMessage(error)}`);
+      setStatus(`Ошибка скачивания ПДФ:\n${getErrorMessage(error)}`);
     }
   });
 }
@@ -568,7 +568,7 @@ if (uploadBtn) {
       const payload = await api.uploadAudio(file, authState.token);
       const job = payload.job || {};
       const mode = isAuthenticated() ? "Авторизованный режим: будет в личной библиотеке." : "Гостевой режим.";
-      setStatus(`Файл отправлен.\njob_id: ${job.id}\nstatus: ${job.status}\n${mode}`);
+      setStatus(`Файл отправлен.\nидентификатор задачи: ${job.id}\nстатус: ${job.status}\n${mode}`);
 
       if (job.id && jobIdInput) {
         jobIdInput.value = job.id;
@@ -588,13 +588,13 @@ if (pdfBtn) {
   pdfBtn.addEventListener("click", async () => {
     const jobId = jobIdInput ? jobIdInput.value.trim() : "";
     if (!jobId) {
-      setStatus("Введи job_id.");
+      setStatus("Введи идентификатор задачи.");
       return;
     }
 
     try {
       setBusy(true);
-      setStatus("Скачиваю PDF...");
+      setStatus("Скачиваю ПДФ...");
 
       const pdfBlob = await api.fetchPdfByJobId(jobId);
       const pdfUrl = URL.createObjectURL(pdfBlob);
@@ -605,9 +605,9 @@ if (pdfBtn) {
       link.click();
       link.remove();
       URL.revokeObjectURL(pdfUrl);
-      setStatus(`PDF скачан для job_id: ${jobId}`);
+      setStatus(`ПДФ скачан для идентификатор задачи: ${jobId}`);
     } catch (error) {
-      setStatus(`Ошибка получения PDF:\n${getErrorMessage(error)}`);
+      setStatus(`Ошибка получения ПДФ:\n${getErrorMessage(error)}`);
     } finally {
       setBusy(false);
     }
@@ -618,21 +618,21 @@ if (jsonBtn) {
   jsonBtn.addEventListener("click", async () => {
     const jobId = jobIdInput ? jobIdInput.value.trim() : "";
     if (!jobId) {
-      setStatus("Введи job_id.");
+      setStatus("Введи идентификатор задачи.");
       return;
     }
 
     try {
       setBusy(true);
-      setStatus("Получаю JSON-табулатуру...");
+      setStatus("Получаю табулатуру...");
 
       const payload = await api.fetchTablatureByJobId(jobId);
       if (jsonView) {
         jsonView.textContent = JSON.stringify(payload, null, 2);
       }
-      setStatus(`JSON табулатура получена для job_id: ${jobId}`);
+      setStatus(`Табулатура получена для идентификатор задачи: ${jobId}`);
     } catch (error) {
-      setStatus(`Ошибка получения JSON:\n${getErrorMessage(error)}`);
+      setStatus(`Ошибка получения табулатуры:\n${getErrorMessage(error)}`);
     } finally {
       setBusy(false);
     }

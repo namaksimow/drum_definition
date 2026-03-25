@@ -1,5 +1,5 @@
 import * as api from "../services/api.js?v=12";
-import { initTopAuthWidget } from "../services/top_auth_widget.js?v=8";
+import { initTopAuthWidget } from "../services/top_auth_widget.js?v=12";
 
 const subtitleEl = document.getElementById("coursesSubtitle");
 const statusEl = document.getElementById("status");
@@ -22,7 +22,7 @@ function setAddHint(message) {
 }
 
 function getErrorMessage(error) {
-  if (!error) return "Unknown error";
+  if (!error) return "Неизвестная ошибка";
   const raw = typeof error.message === "string" ? error.message : String(error);
   try {
     const parsed = JSON.parse(raw);
@@ -72,7 +72,7 @@ function renderCourses(items) {
   listEl.innerHTML = items
     .map((course) => {
       const safeTitle = escapeHtml(course.title || "Без названия");
-      const safeAuthor = escapeHtml(course.author || "unknown");
+      const safeAuthor = escapeHtml(course.author || "неизвестно");
       const safeDescription = escapeHtml(course.description || "Описание пока не добавлено.");
       const tags = Array.isArray(course.tags) ? course.tags.map((x) => escapeHtml(x)) : [];
       const tagsText = tags.length ? tags.join(", ") : "без тегов";
