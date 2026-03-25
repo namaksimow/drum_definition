@@ -194,6 +194,42 @@
   resize: vertical;
 }
 
+.request-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1150;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+}
+
+.request-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.38);
+}
+
+.request-modal__card {
+  position: relative;
+  z-index: 1;
+  width: min(760px, 100%);
+  max-height: calc(100vh - 28px);
+  overflow: auto;
+}
+
+.request-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 10px;
+}
+
+.request-modal__title {
+  margin: 0;
+}
+
 .user-editor {
   display: grid;
   gap: 10px;

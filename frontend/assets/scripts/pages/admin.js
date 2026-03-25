@@ -11,14 +11,14 @@ const adminCoursesListEl = document.getElementById("adminCoursesList");
 const adminUsersListEl = document.getElementById("adminUsersList");
 
 const requestDetailPanelEl = document.getElementById("requestDetailPanel");
-const requestDetailContentEl = document.getElementById("requestDetailContent");
 const requestDetailMetaEl = document.getElementById("requestDetailMeta");
 const requestDetailMessageEl = document.getElementById("requestDetailMessage");
 const rejectMessageInput = document.getElementById("rejectMessageInput");
 const approveRequestBtn = document.getElementById("approveRequestBtn");
 const rejectRequestBtn = document.getElementById("rejectRequestBtn");
+const requestModalBackdrop = document.getElementById("requestModalBackdrop");
+const closeRequestModalBtn = document.getElementById("closeRequestModalBtn");
 const userDetailPanelEl = document.getElementById("userDetailPanel");
-const userDetailContentEl = document.getElementById("userDetailContent");
 const userDetailMetaEl = document.getElementById("userDetailMeta");
 const userEditEmailInput = document.getElementById("userEditEmailInput");
 const userEditNicknameInput = document.getElementById("userEditNicknameInput");
@@ -114,9 +114,12 @@ function setDetailVisible(visible) {
   if (requestDetailPanelEl) {
     requestDetailPanelEl.classList.toggle("is-hidden", !visible);
   }
-  if (requestDetailContentEl) {
-    requestDetailContentEl.classList.toggle("is-hidden", !visible);
-  }
+}
+
+function closeRequestDetails() {
+  selectedRequestId = null;
+  renderRequestsList();
+  renderRequestDetails();
 }
 
 function setUserDetailVisible(visible) {
@@ -572,6 +575,18 @@ if (requestsListEl) {
   });
 }
 
+if (requestModalBackdrop) {
+  requestModalBackdrop.addEventListener("click", () => {
+    closeRequestDetails();
+  });
+}
+
+if (closeRequestModalBtn) {
+  closeRequestModalBtn.addEventListener("click", () => {
+    closeRequestDetails();
+  });
+}
+
 if (adminTablaturesListEl) {
   adminTablaturesListEl.addEventListener("click", (event) => {
     const target = event.target;
@@ -658,6 +673,7 @@ if (closeUserModalBtn) {
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
+    closeRequestDetails();
     setUserDetailVisible(false);
   }
 });
